@@ -34,3 +34,7 @@ yarn-error.log
 /storage/framework/testing/*
 !/storage/framework/testing/.gitignore
 /storage/app/marksheets/*
+/storage/app/templates/*
+/storage/app/public/school/*
+/storage/app/backups/*
+/storage/app/ocr/*
