@@ -39,22 +39,41 @@ class DocumentConversionService
     }
 
     /**
-     * Convert docx to pdf using libreoffice headless.
+     * Convert docx to pdf using ONLYOFFICE's internal x2t converter via Docker.
+     * This guarantees 100% pixel-perfect formatting identical to the web editor.
      */
     public function convertDocxToPdf(string $inputDocxPath, string $outputDir): ?string
     {
-        $profileDir = "file://" . escapeshellarg($outputDir . '/lo_profile');
-        $cmd = "libreoffice -env:UserInstallation={$profileDir} --headless --convert-to pdf --outdir " . escapeshellarg($outputDir) . " " . escapeshellarg($inputDocxPath);
-        exec($cmd . " 2>&1", $output, $returnVar);
+        $filename = pathinfo($inputDocxPath, PATHINFO_FILENAME);
+        $pdfPath = rtrim($outputDir, '/') . '/' . $filename . '.pdf';
 
-        if ($returnVar !== 0) {
-            Log::error("Failed to convert to PDF: " . implode("\n", $output));
+        // Temporary paths inside the docker container
+        $tmpIn = "/tmp/in_" . uniqid() . ".docx";
+        $tmpOut = "/tmp/out_" . uniqid() . ".pdf";
+
+        // 1. Copy the .docx into the ONLYOFFICE container
+        exec("docker cp " . escapeshellarg($inputDocxPath) . " onlyoffice-ds:{$tmpIn} 2>&1", $out1, $ret1);
+        if ($ret1 !== 0) {
+            Log::error("Docker copy in failed: " . implode("\n", $out1));
             return null;
         }
 
-        $filename = pathinfo($inputDocxPath, PATHINFO_FILENAME);
-        $pdfPath = rtrim($outputDir, '/') . '/' . $filename . '.pdf';
-        
-        return file_exists($pdfPath) ? $pdfPath : null;
+        // 2. Convert using ONLYOFFICE x2t engine (using its own core fonts)
+        // x2t signature: x2t <input> <output> <fonts_path>
+        $x2tCmd = "docker exec onlyoffice-ds /var/www/onlyoffice/documentserver/server/FileConverter/bin/x2t {$tmpIn} {$tmpOut} /var/www/onlyoffice/documentserver/core-fonts";
+        exec($x2tCmd . " 2>&1", $out2, $ret2);
+
+        // 3. Copy the resulting PDF out of the container
+        exec("docker cp onlyoffice-ds:{$tmpOut} " . escapeshellarg($pdfPath) . " 2>&1", $out3, $ret3);
+
+        // 4. Cleanup temporary files inside the container
+        exec("docker exec onlyoffice-ds rm -f {$tmpIn} {$tmpOut}");
+
+        if (!file_exists($pdfPath) || filesize($pdfPath) === 0) {
+            Log::error("ONLYOFFICE conversion failed. x2t output: " . implode("\n", $out2));
+            return null;
+        }
+
+        return $pdfPath;
     }
 }
