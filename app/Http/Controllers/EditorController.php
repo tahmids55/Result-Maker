@@ -25,16 +25,23 @@ class EditorController extends Controller
         // E.g., request()->getSchemeAndHttpHost() or env('APP_URL')
         // We'll use a hardcoded fallback to host.docker.internal if APP_URL is localhost for typical dev setups
         $publicHost = request()->getSchemeAndHttpHost();
-        if (app()->environment('production') && str_starts_with(env('APP_URL'), 'https://')) {
-            $publicHost = str_replace('http://', 'https://', $publicHost);
+        if (app()->environment('production')) {
+            $publicHost = env('APP_URL'); // Always force the secure Cloudflare URL in production
         }
 
-        // Use public host for all ONLYOFFICE communication
-        // Cloudflare handles these requests fine.
-        $downloadUrl = $publicHost . route('onlyoffice.download', ['id' => $template->id, 'token' => $downloadToken], false);
-        $callbackUrl = $publicHost . route('onlyoffice.callback', [], false);
+        // For local development, ONLYOFFICE is in Docker and cannot reach '127.0.0.1' (itself).
+        // We rewrite it to host.docker.internal (or docker bridge) so it hits the host's php artisan serve.
+        $internalHost = $publicHost;
+        if (!app()->environment('production') && (str_contains($publicHost, 'localhost') || str_contains($publicHost, '127.0.0.1'))) {
+            $internalHost = 'http://172.17.0.1:8000'; // Default docker bridge for linux
+            // Note: If ONLYOFFICE blocks private IPs on local, user must set allowPrivateIPAddress=true
+        }
 
-        $documentKey = $template->id . '_' . filemtime(Storage::disk('local')->path($template->file_path));
+        $downloadUrl = $internalHost . route('onlyoffice.download', ['id' => $template->id, 'token' => $downloadToken], false);
+        $callbackUrl = $internalHost . route('onlyoffice.callback', [], false);
+
+        // Append _v3 to force ONLYOFFICE to start a fresh session, bypassing the cached broken callbackUrl
+        $documentKey = $template->id . '_' . filemtime(Storage::disk('local')->path($template->file_path)) . '_v3';
 
         $config = [
             'document' => [
