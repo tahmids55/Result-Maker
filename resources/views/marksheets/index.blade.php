@@ -61,6 +61,22 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Output Mode</label>
+                        <select name="output_mode" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="individual">Individual Files (ZIP)</option>
+                            <option value="combined">All-in-One (Single File)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Output Format</label>
+                        <select name="output_format" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="docx">.docx (Word)</option>
+                            <option value="pdf">.pdf (PDF)</option>
+                        </select>
+                    </div>
+                </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">
                     🚀 Queue Generation
                 </button>
@@ -122,6 +138,22 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Output Mode</label>
+                        <select name="output_mode" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="individual">Individual Files (ZIP)</option>
+                            <option value="combined">All-in-One (Single File)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Output Format</label>
+                        <select name="output_format" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 outline-none">
+                            <option value="docx">.docx (Word)</option>
+                            <option value="pdf">.pdf (PDF)</option>
+                        </select>
+                    </div>
                 </div>
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">
                     ⬇ Generate & Download ZIP

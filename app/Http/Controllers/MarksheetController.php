@@ -10,12 +10,17 @@ use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
 use App\Services\MarksheetGenerationService;
+use App\Services\DocumentConversionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MarksheetController extends Controller
 {
-    public function __construct(private MarksheetGenerationService $service) {}
+    public function __construct(
+        private MarksheetGenerationService $service,
+        private DocumentConversionService $conversionService
+    ) {}
 
     public function index()
     {
@@ -25,11 +30,10 @@ class MarksheetController extends Controller
         return view('marksheets.index', compact('classes', 'exams', 'templates'));
     }
 
-    /**
-     * Dispatch batch generation jobs for all students in a class-section.
-     */
     public function generate(Request $request)
     {
+        // For queue, we will keep it simple for now and just dispatch the jobs.
+        // We could implement combining for queues later if needed.
         $request->validate([
             'class_id'    => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
             'section_id'  => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
@@ -64,16 +68,15 @@ class MarksheetController extends Controller
         return back()->with('success', "Generation queued for {$students->count()} students. Check back shortly for downloads.");
     }
 
-    /**
-     * Generate immediately (synchronous, for small classes).
-     */
     public function generateSync(Request $request)
     {
         $request->validate([
-            'class_id'    => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
-            'section_id'  => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
-            'exam_id'     => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
-            'template_id' => ['required', \Illuminate\Validation\Rule::exists('marksheet_templates', 'id')->where('user_id', auth()->id())],
+            'class_id'      => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
+            'section_id'    => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
+            'exam_id'       => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
+            'template_id'   => ['required', \Illuminate\Validation\Rule::exists('marksheet_templates', 'id')->where('user_id', auth()->id())],
+            'output_mode'   => 'required|in:individual,combined',
+            'output_format' => 'required|in:docx,pdf',
         ]);
 
         $exam     = Exam::findOrFail($request->exam_id);
@@ -96,27 +99,59 @@ class MarksheetController extends Controller
             return back()->with('error', 'No students found for the selected criteria.');
         }
 
-        $zip = new \ZipArchive();
-        $zipDir = "marksheets/{$exam->id}";
-        Storage::disk('local')->makeDirectory($zipDir);
-        $zipFileName = "class_{$request->class_id}_section_{$request->section_id}_custom_" . time() . ".zip";
-        $zipPath = "{$zipDir}/{$zipFileName}";
-        $fullZipPath = Storage::disk('local')->path($zipPath);
+        $mode   = $request->output_mode;
+        $format = $request->output_format;
 
-        if ($zip->open($fullZipPath, \ZipArchive::CREATE) !== true) {
-            return back()->with('error', "Cannot create zip archive.");
-        }
-
+        // Collect all individual DOCX files
+        $generatedDocxPaths = [];
         foreach ($students as $student) {
             $docPath = $this->service->generateForStudent($student, $exam, $template);
-            $fullDocPath = Storage::disk('local')->path($docPath);
-            $filename = "{$student->roll}_{$student->name}.docx";
-            $zip->addFile($fullDocPath, $filename);
+            $generatedDocxPaths[] = Storage::disk('local')->path($docPath);
         }
 
-        $zip->close();
+        $tempDir = Storage::disk('local')->path("temp_generation/" . Str::uuid());
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0775, true);
+        }
 
-        return Storage::disk('local')->download($zipPath, "marksheets_{$exam->name}_{$exam->year}_Custom.zip");
+        if ($mode === 'combined') {
+            // Merge all DOCX into one
+            $mergedDocxPath = $tempDir . "/combined.docx";
+            $this->conversionService->mergeDocx($generatedDocxPaths, $mergedDocxPath);
+
+            if ($format === 'pdf') {
+                $pdfPath = $this->conversionService->convertDocxToPdf($mergedDocxPath, $tempDir);
+                if (!$pdfPath) {
+                    return back()->with('error', 'Failed to convert to PDF. Please ensure LibreOffice is installed.');
+                }
+                return response()->download($pdfPath, "marksheets_{$exam->name}_Combined.pdf")->deleteFileAfterSend(true);
+            } else {
+                return response()->download($mergedDocxPath, "marksheets_{$exam->name}_Combined.docx")->deleteFileAfterSend(true);
+            }
+        } else {
+            // Individual mode (ZIP)
+            $zip = new \ZipArchive();
+            $zipFileName = $tempDir . "/marksheets.zip";
+            
+            if ($zip->open($zipFileName, \ZipArchive::CREATE) !== true) {
+                return back()->with('error', "Cannot create zip archive.");
+            }
+
+            foreach ($generatedDocxPaths as $index => $docxPath) {
+                $student = $students[$index];
+                if ($format === 'pdf') {
+                    $pdfPath = $this->conversionService->convertDocxToPdf($docxPath, $tempDir);
+                    if ($pdfPath) {
+                        $zip->addFile($pdfPath, "{$student->roll}_{$student->name}.pdf");
+                    }
+                } else {
+                    $zip->addFile($docxPath, "{$student->roll}_{$student->name}.docx");
+                }
+            }
+            $zip->close();
+
+            return response()->download($zipFileName, "marksheets_{$exam->name}_Individual.zip")->deleteFileAfterSend(true);
+        }
     }
 
     public function download(GeneratedMarksheet $marksheet)
