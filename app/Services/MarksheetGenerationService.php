@@ -72,24 +72,12 @@ class MarksheetGenerationService
         $mappings = $template->field_mappings ?? [];
         foreach ($mappings as $placeholder => $fieldKey) {
             $value = $placeholders[$fieldKey] ?? '';
-            $safeValue = htmlspecialchars((string) $value);
-            // Catch accidental double-braces from visual editor plugin: ${${placeholder}}}
-            try { $processor->setValue('${' . $placeholder . '}', $safeValue); } catch (\Exception $e) {}
-            // Standard replacement
-            try { $processor->setValue($placeholder, $safeValue); } catch (\Exception $e) {}
+            $this->replaceBulletproof($processor, $placeholder, $value);
         }
 
         // Also try direct placeholder name match
         foreach ($placeholders as $key => $value) {
-            $safeValue = htmlspecialchars((string) $value);
-            // Catch accidental double-braces
-            try { $processor->setValue('${' . $key . '}', $safeValue); } catch (\Exception $e) {}
-            // Standard replacement
-            try {
-                $processor->setValue($key, $safeValue);
-            } catch (\Exception $e) {
-                // placeholder may not exist in template — skip
-            }
+            $this->replaceBulletproof($processor, $key, $value);
         }
 
         // Handle subject table rows if template has {{subject_row}} block
@@ -160,8 +148,29 @@ class MarksheetGenerationService
         $fullPath = Storage::disk('local')->path($filePath);
         $processor = new TemplateProcessor($fullPath);
 
-        // PHPWord exposes getVariables() on TemplateProcessor
-        return $processor->getVariables();
+        // PHPWord exposes getVariables() on TemplateProcessor, but they might be polluted with extra brackets if the user dragged/dropped poorly.
+        $vars = $processor->getVariables();
+        $cleaned = [];
+        foreach ($vars as $var) {
+            $cleaned[] = str_replace(['{', '}', '$'], '', $var);
+        }
+        return array_values(array_unique($cleaned));
+    }
+
+    private function replaceBulletproof(TemplateProcessor $processor, string $key, string $value): void
+    {
+        $safeValue = htmlspecialchars((string) $value);
+        $cleanKey = str_replace(['{', '}', '$'], '', $key);
+        
+        // Pass exact strings that start with ${ so PHPWord doesn't alter them.
+        // Try largest to smallest to consume all surrounding brackets!
+        $processor->setValue('${${' . $cleanKey . '}}}', $safeValue);
+        $processor->setValue('${${' . $cleanKey . '}}', $safeValue);
+        $processor->setValue('${{' . $cleanKey . '}}}', $safeValue);
+        $processor->setValue('${{' . $cleanKey . '}}', $safeValue);
+        $processor->setValue('${' . $cleanKey . '}}}', $safeValue);
+        $processor->setValue('${' . $cleanKey . '}}', $safeValue);
+        $processor->setValue('${' . $cleanKey . '}', $safeValue);
     }
 
     // ----------------------------------------------------------------

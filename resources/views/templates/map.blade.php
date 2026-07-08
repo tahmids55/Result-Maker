@@ -42,7 +42,7 @@
                                         <optgroup label="{{ $group }}">
                                             @foreach($fields as $key => $label)
                                                 <option value="{{ $key }}"
-                                                    {{ (($template->field_mappings[$placeholder] ?? '') === $key) ? 'selected' : '' }}>
+                                                    {{ (array_key_exists($placeholder, $template->field_mappings ?? []) ? (($template->field_mappings[$placeholder] ?? '') === $key ? 'selected' : '') : ($placeholder === $key ? 'selected' : '')) }}>
                                                     {{ $label }}
                                                 </option>
                                             @endforeach
