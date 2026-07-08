@@ -43,8 +43,9 @@ class DocumentConversionService
      */
     public function convertDocxToPdf(string $inputDocxPath, string $outputDir): ?string
     {
-        $cmd = "libreoffice --headless --convert-to pdf --outdir " . escapeshellarg($outputDir) . " " . escapeshellarg($inputDocxPath);
-        exec($cmd, $output, $returnVar);
+        $profileDir = "file://" . escapeshellarg($outputDir . '/lo_profile');
+        $cmd = "libreoffice -env:UserInstallation={$profileDir} --headless --convert-to pdf --outdir " . escapeshellarg($outputDir) . " " . escapeshellarg($inputDocxPath);
+        exec($cmd . " 2>&1", $output, $returnVar);
 
         if ($returnVar !== 0) {
             Log::error("Failed to convert to PDF: " . implode("\n", $output));
