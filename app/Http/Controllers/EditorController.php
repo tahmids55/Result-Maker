@@ -222,7 +222,7 @@ class EditorController extends Controller
                 $fields[] = [
                     'category' => $category,
                     'label' => $label,
-                    'placeholder' => '${' . $key . '}',
+                    'placeholder' => $key,
                     'description' => 'System placeholder for ' . $label
                 ];
             }
