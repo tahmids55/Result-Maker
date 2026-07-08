@@ -72,14 +72,22 @@ class MarksheetGenerationService
         $mappings = $template->field_mappings ?? [];
         foreach ($mappings as $placeholder => $fieldKey) {
             $value = $placeholders[$fieldKey] ?? '';
-            $processor->setValue($placeholder, htmlspecialchars((string) $value));
+            $safeValue = htmlspecialchars((string) $value);
+            // Catch accidental double-braces from visual editor plugin: ${${placeholder}}}
+            try { $processor->setValue('${' . $placeholder . '}', $safeValue); } catch (\Exception $e) {}
+            // Standard replacement
+            try { $processor->setValue($placeholder, $safeValue); } catch (\Exception $e) {}
         }
 
         // Also try direct placeholder name match
         foreach ($placeholders as $key => $value) {
+            $safeValue = htmlspecialchars((string) $value);
+            // Catch accidental double-braces
+            try { $processor->setValue('${' . $key . '}', $safeValue); } catch (\Exception $e) {}
+            // Standard replacement
             try {
-                $processor->setValue($key, htmlspecialchars((string) $value));
-            } catch (\Exception) {
+                $processor->setValue($key, $safeValue);
+            } catch (\Exception $e) {
                 // placeholder may not exist in template — skip
             }
         }
