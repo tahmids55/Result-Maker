@@ -1,0 +1,60 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Third Party Services
+    |--------------------------------------------------------------------------
+    */
+
+    'mailgun' => [
+        'domain'   => env('MAILGUN_DOMAIN'),
+        'secret'   => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme'   => 'https',
+    ],
+
+    'postmark' => [
+        'token' => env('POSTMARK_TOKEN'),
+    ],
+
+    'ses' => [
+        'key'    => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Twilio SMS / WhatsApp
+    |--------------------------------------------------------------------------
+    */
+    'twilio' => [
+        'sid'   => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'from'  => env('TWILIO_FROM'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Business API
+    |--------------------------------------------------------------------------
+    */
+    'whatsapp' => [
+        'api_url' => env('WHATSAPP_API_URL'),
+        'api_key' => env('WHATSAPP_API_KEY'),
+        'from'    => env('WHATSAPP_FROM_NUMBER'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tesseract OCR
+    |--------------------------------------------------------------------------
+    */
+    'tesseract' => [
+        'path' => env('TESSERACT_PATH', '/usr/bin/tesseract'),
+        'lang' => env('TESSERACT_LANG', 'eng'),
+    ],
+
+];
