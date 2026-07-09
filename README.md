@@ -1,4 +1,4 @@
-# MarksCraft — Dynamic Result Management System
+# ResultMaker — Dynamic Result Management System
 
 > **One system adapts to ANY school's exam pattern. Design marksheets in MS Word, upload, and generate automatically.**
 
@@ -74,8 +74,8 @@ php-mbstring php-xml php-zip php-mysql php-curl php-dom php-gd php-bcmath
 
 ### Step 1 — Clone the Repository
 ```bash
-git clone https://github.com/yourorg/markscraft.git
-cd markscraft
+git clone https://github.com/yourorg/ResultMaker.git
+cd ResultMaker
 ```
 
 ### Step 2 — Install PHP Dependencies
@@ -94,14 +94,14 @@ Edit `.env`:
 ```env
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=markscraft
+DB_DATABASE=ResultMaker
 DB_USERNAME=root
 DB_PASSWORD=your_password
 ```
 
 Create the database:
 ```sql
-CREATE DATABASE markscraft CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE ResultMaker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 ### Step 5 — Run Migrations & Seed
@@ -110,7 +110,7 @@ php artisan migrate --seed
 ```
 
 This creates:
-- Admin account: `admin@markscraft.com` / `password`
+- Admin account: `admin@ResultMaker.com` / `password`
 - Sample school, classes, students, subjects, exams, marks
 
 ### Step 6 — Storage Link
@@ -138,7 +138,7 @@ APP_TIMEZONE=Asia/Dhaka
 
 # Database
 DB_CONNECTION=mysql
-DB_DATABASE=markscraft
+DB_DATABASE=ResultMaker
 
 # Queue (Redis for background jobs)
 QUEUE_CONNECTION=redis
@@ -163,7 +163,7 @@ TESSERACT_LANG=eng+ben
 ## 📖 Usage Guide
 
 ### 1. Initial Setup
-1. Log in at `/login` with `admin@markscraft.com` / `password`
+1. Log in at `/login` with `admin@ResultMaker.com` / `password`
 2. Go to **Settings** → Enter your school name, address, logo
 3. Configure the grading system (default: Bangladesh SSC scale)
 
@@ -382,7 +382,7 @@ php artisan test --coverage
 ## 📁 Project Structure
 
 ```
-markscraft/
+ResultMaker/
 ├── app/
 │   ├── Console/Commands/
 │   │   ├── BackupDatabase.php
@@ -450,7 +450,7 @@ markscraft/
 ## 🎯 Sample Workflow
 
 ```
-1.  Login           →  admin@markscraft.com / password
+1.  Login           →  admin@ResultMaker.com / password
 2.  Settings        →  Set school name, logo, grading
 3.  Classes         →  Add "Class 10"
 4.  Sections        →  Add "A" under Class 10

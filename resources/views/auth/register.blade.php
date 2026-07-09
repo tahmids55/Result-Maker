@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MarksCraft – Register</title>
+    <title>ResultMaker – Register</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="h-full flex items-center justify-center">
@@ -13,7 +13,7 @@
         <div class="flex items-center justify-center gap-3 mb-8">
             <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">M</div>
             <div>
-                <div class="text-2xl font-bold text-gray-900">MarksCraft</div>
+                <div class="text-2xl font-bold text-gray-900">ResultMaker</div>
                 <div class="text-xs text-gray-500">Create your account</div>
             </div>
         </div>

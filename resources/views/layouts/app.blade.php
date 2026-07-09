@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'MarksCraft') – Dynamic Result Management</title>
+    <title>@yield('title', 'ResultMaker') – Dynamic Result Management</title>
 
     {{-- Vite Assets --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -63,7 +63,7 @@
             {{-- Logo --}}
             <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
                 <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-lg text-white">M</div>
-                <span class="text-xl font-semibold tracking-tight text-white">MarksCraft</span>
+                <span class="text-xl font-semibold tracking-tight text-white">ResultMaker</span>
             </div>
 
             {{-- Nav --}}
@@ -79,7 +79,7 @@
         {{-- Logo --}}
         <div class="flex items-center gap-3 px-6 py-5 border-b border-slate-700">
             <div class="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-lg">M</div>
-            <span class="text-xl font-semibold tracking-tight">MarksCraft</span>
+            <span class="text-xl font-semibold tracking-tight">ResultMaker</span>
         </div>
 
         {{-- Nav --}}

@@ -1,7 +1,7 @@
 {
-    "name": "markscraft/markscraft",
+    "name": "resultmaker/resultmaker",
     "type": "project",
-    "description": "MarksCraft - Dynamic Result Management System",
+    "description": "resultmaker - Dynamic Result Management System",
     "keywords": ["laravel", "result", "marks", "school"],
     "license": "MIT",
     "require": {

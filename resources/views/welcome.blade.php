@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MarksCraft | Dynamic Result Management</title>
+    <title>ResultMaker | Dynamic Result Management</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,7 +91,7 @@
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-all duration-300 transform group-hover:scale-105">
                         <span class="text-white font-display font-bold text-xl">M</span>
                     </div>
-                    <span class="font-display font-bold text-xl text-white tracking-tight">MarksCraft</span>
+                    <span class="font-display font-bold text-xl text-white tracking-tight">ResultMaker</span>
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
@@ -127,7 +127,7 @@
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
                 </span>
-                MarksCraft 2.0 is now live
+                ResultMaker 2.0 is now live
             </div>
             
             <h1 class="text-5xl sm:text-7xl font-display font-extrabold text-white tracking-tight leading-[1.1] mb-8 animate-fade-in-up" style="animation-delay: 0.1s;">
@@ -211,7 +211,7 @@
     <div class="py-24 relative z-10 border-t border-white/5 bg-slate-900/50 mt-12">
         <div class="max-w-4xl mx-auto px-4 text-center">
             <h2 class="text-3xl sm:text-5xl font-display font-bold text-white mb-6">Ready to transform your school?</h2>
-            <p class="text-slate-400 text-lg mb-10">Join schools around the world that use MarksCraft to save hundreds of hours on result processing.</p>
+            <p class="text-slate-400 text-lg mb-10">Join schools around the world that use ResultMaker to save hundreds of hours on result processing.</p>
             <a href="{{ route('register') }}" class="px-8 py-4 rounded-full bg-white text-slate-900 font-bold hover:scale-105 transition-transform duration-300 inline-block">
                 Create an account
             </a>
@@ -222,9 +222,9 @@
     <footer class="border-t border-white/10 bg-slate-950 py-12 text-center text-slate-500 text-sm">
         <div class="flex items-center justify-center gap-2 mb-4">
             <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-white font-bold text-xs">M</div>
-            <span class="font-bold text-white">MarksCraft</span>
+            <span class="font-bold text-white">ResultMaker</span>
         </div>
-        <p>&copy; {{ date('Y') }} MarksCraft Inc. All rights reserved.</p>
+        <p>&copy; {{ date('Y') }} ResultMaker Inc. All rights reserved.</p>
     </footer>
 
 </body>
