@@ -46,10 +46,11 @@ class ResultCalculationService
             $subSubjectDetails = [];
 
             if ($subject->has_sub_subjects) {
+                $aggregatedComponents = [];
+
                 foreach ($subject->subSubjects as $sub) {
                     $subObtained = 0;
                     $subFull = 0;
-                    $subPassed = true;
                     $subComponents = [];
 
                     $components = $sub->exam_components ?? [];
@@ -62,12 +63,6 @@ class ResultCalculationService
 
                         $obtained  = $mark?->obtained_marks ?? 0;
                         $isAbsent  = $mark?->is_absent ?? false;
-                        $compPassed = !$isAbsent && ($obtained >= $passMarks);
-
-                        if (!$compPassed) {
-                            $subPassed = false;
-                            $subjectPassed = false;
-                        }
 
                         $subObtained += $obtained;
                         $subFull     += $fullMarks;
@@ -76,9 +71,23 @@ class ResultCalculationService
                             'obtained'   => $obtained,
                             'full'       => $fullMarks,
                             'pass'       => $passMarks,
-                            'is_passed'  => $compPassed,
                             'is_absent'  => $isAbsent,
                         ];
+
+                        if (!isset($aggregatedComponents[$componentName])) {
+                            $aggregatedComponents[$componentName] = [
+                                'obtained' => 0, 
+                                'pass' => 0, 
+                                'full' => 0, 
+                                'is_absent' => false
+                            ];
+                        }
+                        $aggregatedComponents[$componentName]['obtained'] += $obtained;
+                        $aggregatedComponents[$componentName]['pass'] += $passMarks;
+                        $aggregatedComponents[$componentName]['full'] += $fullMarks;
+                        if ($isAbsent) {
+                            $aggregatedComponents[$componentName]['is_absent'] = true;
+                        }
                     }
 
                     $subPercentage = $subFull > 0 ? round(($subObtained / $subFull) * 100, 2) : 0;
@@ -92,12 +101,27 @@ class ResultCalculationService
                         'percentage'     => $subPercentage,
                         'grade'          => $subGradeInfo['grade'],
                         'gpa'            => $subGradeInfo['gpa'],
-                        'is_passed'      => $subPassed,
                         'components'     => $subComponents,
                     ];
 
                     $subjectObtained += $subObtained;
                     $subjectFull     += $subFull;
+                }
+
+                foreach ($aggregatedComponents as $compName => $data) {
+                    $compPassed = !$data['is_absent'] && ($data['obtained'] >= $data['pass']);
+                    
+                    $componentDetails[$compName] = [
+                        'obtained'  => $data['obtained'],
+                        'full'      => $data['full'],
+                        'pass'      => $data['pass'],
+                        'is_passed' => $compPassed,
+                        'is_absent' => $data['is_absent'],
+                    ];
+
+                    if (!$compPassed) {
+                        $subjectPassed = false;
+                    }
                 }
             } else {
                 $components = $subject->exam_components ?? [];
@@ -137,6 +161,7 @@ class ResultCalculationService
 
             if (!$subjectPassed) {
                 $failedSubjects++;
+                $gradeInfo = ['grade' => 'F', 'gpa' => 0.00];
             }
 
             $subjectDetails[] = [
@@ -162,6 +187,11 @@ class ResultCalculationService
         $percentage  = $totalFull > 0 ? round(($totalObtained / $totalFull) * 100, 2) : 0;
         $gradeInfo   = GradeConfig::resolve($percentage);
         $isPassed    = $failedSubjects === 0 && $percentage >= 33;
+        
+        if (!$isPassed) {
+            $gradeInfo = ['grade' => 'F', 'gpa' => 0.00];
+        }
+        
         $division    = $this->resolveDivision($percentage, $isPassed);
 
         return Result::updateOrCreate(

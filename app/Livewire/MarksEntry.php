@@ -273,6 +273,8 @@ class MarksEntry extends Component
 
             foreach ($this->subjects as $subject) {
                 if ($subject['has_sub_subjects']) {
+                    $aggregatedComponents = [];
+
                     foreach ($subject['sub_subjects'] as $sub) {
                         foreach ($sub['exam_components'] as $componentName => $config) {
                             $obtained  = (float) ($this->marks[$sid][$subject['id']][$sub['id']][$componentName] ?? 0);
@@ -282,9 +284,17 @@ class MarksEntry extends Component
                             $total     += $obtained;
                             $fullTotal += $full;
 
-                            if ($obtained < $pass) {
-                                $allPassed = false;
+                            if (!isset($aggregatedComponents[$componentName])) {
+                                $aggregatedComponents[$componentName] = ['obtained' => 0, 'pass' => 0];
                             }
+                            $aggregatedComponents[$componentName]['obtained'] += $obtained;
+                            $aggregatedComponents[$componentName]['pass'] += $pass;
+                        }
+                    }
+
+                    foreach ($aggregatedComponents as $compName => $data) {
+                        if ($data['obtained'] < $data['pass']) {
+                            $allPassed = false;
                         }
                     }
                 } else {
@@ -304,13 +314,20 @@ class MarksEntry extends Component
             }
 
             $pct = $fullTotal > 0 ? round(($total / $fullTotal) * 100, 2) : 0;
-            [$grade, $gpa] = $this->resolveGrade($pct, $gradeMap);
+            $isPassed = $allPassed && $pct >= 33;
+            
+            if (!$isPassed) {
+                $grade = 'F';
+                $gpa = 0.00;
+            } else {
+                [$grade, $gpa] = $this->resolveGrade($pct, $gradeMap);
+            }
 
             $this->rowTotals[$sid]      = $total;
             $this->rowPercentages[$sid] = $pct;
             $this->rowGpas[$sid]        = $gpa;
             $this->rowGrades[$sid]      = $grade;
-            $this->rowPassed[$sid]      = $allPassed && $pct >= 33;
+            $this->rowPassed[$sid]      = $isPassed;
         }
     }
 
