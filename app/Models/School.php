@@ -23,6 +23,7 @@ class School extends Model
         'gpa_scale',
         'sms_api_key',
         'whatsapp_api_key',
+        'auto_save_marks',
     ];
 
     /**

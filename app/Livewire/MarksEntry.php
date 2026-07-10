@@ -27,6 +27,7 @@ class MarksEntry extends Component
     // State
     public bool  $loaded    = false;
     public bool  $saving    = false;
+    public bool  $autoSaveEnabled = false;
     public array $errors_   = [];
 
     // Computed (reactive)
@@ -35,6 +36,11 @@ class MarksEntry extends Component
     public array $rowGpas          = [];  // [student_id] => gpa
     public array $rowGrades        = [];  // [student_id] => grade
     public array $rowPassed        = [];  // [student_id] => bool
+
+    public function mount(): void
+    {
+        $this->autoSaveEnabled = (bool) (\App\Models\School::getSettings()?->auto_save_marks ?? false);
+    }
 
     public function updatedClassId(): void
     {
@@ -141,7 +147,7 @@ class MarksEntry extends Component
         $this->recalculateAll();
     }
 
-    public function saveMarks(): void
+    public function saveMarks(bool $silent = false): void
     {
         if (!$this->loaded) return;
 
@@ -217,11 +223,19 @@ class MarksEntry extends Component
 
         $this->saving = false;
 
-        if (empty($this->errors_)) {
-            session()->flash('success', "{$saved} marks saved successfully.");
-        } else {
-            session()->flash('warning', count($this->errors_) . ' validation issues found. Valid marks were saved.');
+        if (!$silent) {
+            if (empty($this->errors_)) {
+                session()->flash('success', "{$saved} marks saved successfully.");
+            } else {
+                session()->flash('warning', count($this->errors_) . ' validation issues found. Valid marks were saved.');
+            }
         }
+    }
+
+    public function saveMarksSilent(): void
+    {
+        if (!$this->autoSaveEnabled) return;
+        $this->saveMarks(true);
     }
 
     public function saveAndCalculateMarks(ResultCalculationService $service): void

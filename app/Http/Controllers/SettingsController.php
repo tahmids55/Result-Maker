@@ -49,6 +49,15 @@ class SettingsController extends Controller
         return back()->with('success', 'School settings saved.');
     }
 
+    public function updateGeneral(Request $request)
+    {
+        $school = School::firstOrNew();
+        $school->auto_save_marks = $request->has('auto_save_marks');
+        $school->save();
+
+        return back()->with('success', 'General settings saved.');
+    }
+
     public function updateGrades(Request $request)
     {
         $request->validate([

@@ -112,6 +112,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     // Settings
     Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('settings/school', [SettingsController::class, 'updateSchool'])->name('settings.school');
+    Route::post('settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
     Route::post('settings/grades', [SettingsController::class, 'updateGrades'])->name('settings.grades');
     Route::get('settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
     Route::post('settings/restore', [SettingsController::class, 'restore'])->name('settings.restore');

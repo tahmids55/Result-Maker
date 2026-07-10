@@ -63,14 +63,14 @@
 
     {{-- Marks Grid --}}
     @if($loaded)
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm" wire:poll.60s="saveMarksSilent">
         {{-- Header --}}
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
             <div class="text-sm font-semibold text-gray-700">
                 {{ count($students) }} Students ·
                 {{ count($subjects) }} Subjects
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
                 <button wire:click="saveMarks" wire:loading.attr="disabled"
                         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
                     <span wire:loading.remove wire:target="saveMarks">💾 Save Marks</span>
@@ -227,7 +227,7 @@
                 💡 Marks are color-coded: <span class="text-orange-600">orange = below pass mark</span>,
                 <span class="text-red-600">red = exceeds full marks</span>
             </p>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
                 <button wire:click="saveMarks" wire:loading.attr="disabled"
                         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
                     <span wire:loading.remove wire:target="saveMarks">💾 Save Marks</span>

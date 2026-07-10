@@ -6,7 +6,7 @@
 
     {{-- Tabs --}}
     <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        @foreach([['school','🏫 School Info'],['grades','📊 Grading System'],['backup','💾 Backup']] as [$key, $label])
+        @foreach([['school','🏫 School Info'],['grades','📊 Grading System'],['backup','💾 Backup'],['general','⚙️ General Settings']] as [$key, $label])
         <button @click="tab='{{ $key }}'"
                 :class="tab==='{{ $key }}' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'"
                 class="px-4 py-2 rounded-lg text-sm font-medium transition-all">
@@ -162,6 +162,36 @@
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg text-sm transition-colors">
                     Save Grading System
                 </button>
+            </form>
+        </div>
+    </div>
+
+    {{-- General Settings --}}
+    <div x-show="tab==='general'" x-cloak>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 max-w-lg space-y-5">
+            <h2 class="text-base font-semibold text-gray-800">General Settings</h2>
+            
+            <form method="POST" action="{{ route('settings.general') }}">
+                @csrf
+                <div class="flex items-center">
+                    <input type="checkbox" name="auto_save_marks" id="auto_save_marks" 
+                           value="1" {{ ($school?->auto_save_marks) ? 'checked' : '' }}
+                           class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
+                    <label for="auto_save_marks" class="ml-2 text-sm font-medium text-gray-700 cursor-pointer select-none">Auto save marks</label>
+                    
+                    <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" class="relative ml-1 flex items-center">
+                        <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <div x-show="open" style="display: none; background-color: rgba(0, 0, 0, 0.75); color: #ffffff; width: 220px;" class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2.5 text-xs rounded-md z-50 text-center shadow-lg leading-relaxed">
+                            Auto save will silently save your work in the marks entry grid every 1 minute.
+                            <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-[5px] border-transparent" style="border-top-color: rgba(0, 0, 0, 0.75);"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg text-sm transition-colors">
+                        Save Settings
+                    </button>
+                </div>
             </form>
         </div>
     </div>
