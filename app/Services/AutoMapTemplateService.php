@@ -95,7 +95,8 @@ class AutoMapTemplateService
                             $placeholder = '';
 
                             if (in_array($colType, ['obtained', 'grade', 'gpa', 'full'])) {
-                                $placeholder = '${' . $key . '_' . $colType . '}';
+                                $suffixMap = ['obtained' => 'obt', 'grade' => 'gr', 'gpa' => 'gp', 'full' => 'fl'];
+                                $placeholder = '${' . $key . '_' . $suffixMap[$colType] . '}';
                             } elseif ($colType !== null) {
                                 // Match the column type to the actual DB component key
                                 $actualCompKey = $this->matchComponentKey($colType, array_keys($dbComponents));

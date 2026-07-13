@@ -9,6 +9,7 @@
         "barryvdh/laravel-dompdf": "^3.0",
         "firebase/php-jwt": "*",
         "guzzlehttp/guzzle": "^7.2",
+        "intervention/image": "*",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.23",
         "laravel/tinker": "^2.9",

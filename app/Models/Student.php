@@ -52,12 +52,12 @@ class Student extends Model
         return $this->hasMany(SmsLog::class);
     }
 
-    public function getPhotoUrlAttribute(): string
+    public function getPhotoUrlAttribute(): ?string
     {
         if ($this->profile_photo) {
             return asset('storage/' . $this->profile_photo);
         }
-        return asset('images/default-student.png');
+        return null;
     }
 
     public function getResultForExam(int $examId): ?Result

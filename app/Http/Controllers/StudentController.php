@@ -80,7 +80,7 @@ class StudentController extends Controller
         }
 
         if ($request->hasFile('profile_photo')) {
-            $data['profile_photo'] = $request->file('profile_photo')->store('students/photos', 'public');
+            $data['profile_photo'] = $this->resizeAndSaveImage($request->file('profile_photo'), 'students/photos');
         }
 
         Student::create($data);
@@ -131,7 +131,7 @@ class StudentController extends Controller
             if ($student->profile_photo) {
                 Storage::disk('public')->delete($student->profile_photo);
             }
-            $data['profile_photo'] = $request->file('profile_photo')->store('students/photos', 'public');
+            $data['profile_photo'] = $this->resizeAndSaveImage($request->file('profile_photo'), 'students/photos');
         }
 
         $student->update($data);
@@ -215,5 +215,66 @@ class StudentController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
         return response()->json($sections);
+    }
+
+    private function resizeAndSaveImage($file, $storePath, $maxWidth = 400)
+    {
+        $path = $file->getRealPath();
+        $mime = mime_content_type($path);
+        
+        $image = null;
+        if ($mime == 'image/jpeg') $image = @imagecreatefromjpeg($path);
+        elseif ($mime == 'image/png') $image = @imagecreatefrompng($path);
+        elseif ($mime == 'image/gif') $image = @imagecreatefromgif($path);
+        elseif ($mime == 'image/webp') $image = @imagecreatefromwebp($path);
+        
+        if (!$image) {
+            return $file->store($storePath, 'public');
+        }
+
+        $width = imagesx($image);
+        $height = imagesy($image);
+        
+        if ($width <= $maxWidth && $height <= $maxWidth) {
+            return $file->store($storePath, 'public');
+        }
+        
+        $ratio = $width / $height;
+        if ($width > $height) {
+            $newWidth = $maxWidth;
+            $newHeight = $maxWidth / $ratio;
+        } else {
+            $newHeight = $maxWidth;
+            $newWidth = $maxWidth * $ratio;
+        }
+        
+        $newImage = imagecreatetruecolor((int)$newWidth, (int)$newHeight);
+        
+        if ($mime == 'image/png' || $mime == 'image/webp') {
+            imagealphablending($newImage, false);
+            imagesavealpha($newImage, true);
+            $transparent = imagecolorallocatealpha($newImage, 255, 255, 255, 127);
+            imagefilledrectangle($newImage, 0, 0, (int)$newWidth, (int)$newHeight, $transparent);
+        }
+        
+        imagecopyresampled($newImage, $image, 0, 0, 0, 0, (int)$newWidth, (int)$newHeight, $width, $height);
+        
+        $filename = uniqid() . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $fullPath = storage_path('app/public/' . $storePath);
+        if (!is_dir($fullPath)) {
+            mkdir($fullPath, 0775, true);
+        }
+        
+        $savePath = $fullPath . '/' . $filename;
+        
+        if ($mime == 'image/jpeg') imagejpeg($newImage, $savePath, 85);
+        elseif ($mime == 'image/png') imagepng($newImage, $savePath, 8);
+        elseif ($mime == 'image/gif') imagegif($newImage, $savePath);
+        elseif ($mime == 'image/webp') imagewebp($newImage, $savePath, 85);
+        
+        imagedestroy($image);
+        imagedestroy($newImage);
+        
+        return $storePath . '/' . $filename;
     }
 }

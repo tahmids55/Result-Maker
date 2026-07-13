@@ -145,37 +145,39 @@ class EditorController extends Controller
         
         $baseFields = [
             'Student Info' => [
-                'student_name'    => 'Student Full Name',
-                'roll'            => 'Roll Number',
-                'registration_no' => 'Registration Number',
-                'father_name'     => 'Father\'s Name',
-                'mother_name'     => 'Mother\'s Name',
-                'class_name'      => 'Class Name',
-                'section_name'    => 'Section Name',
-                'session'         => 'Academic Session',
+                'st_name'   => 'Student Full Name',
+                'st_photo'  => 'Student Profile Photo',
+                'roll'      => 'Roll Number',
+                'reg_no'    => 'Registration No.',
+                'dob'       => 'Date of Birth',
+                'f_name'    => 'Father\'s Name',
+                'm_name'    => 'Mother\'s Name',
+                'cls'       => 'Class Name',
+                'sec'       => 'Section Name',
+                'sess'      => 'Session',
             ],
             'Exam Info' => [
                 'exam_name'  => 'Exam Name',
                 'exam_year'  => 'Exam Year',
             ],
             'Result Info' => [
-                'total_marks'   => 'Total Marks Obtained',
-                'full_marks'    => 'Total Full Marks',
-                'percentage'    => 'Percentage',
-                'gpa'           => 'GPA',
-                'grade'         => 'Grade',
-                'division'      => 'Division',
-                'result_status' => 'Result (PASSED/FAILED)',
-                'rank'          => 'Merit Position',
+                'tot_mks'   => 'Total Marks',
+                'fl_mks'    => 'Full Marks',
+                'pct'       => 'Percentage',
+                'gpa'       => 'GPA',
+                'grd'       => 'Grade',
+                'div'       => 'Division',
+                'status'    => 'Result (Pass/Fail)',
+                'rank'      => 'Merit Rank',
             ],
             'School Info' => [
-                'school_name'    => 'School Name',
-                'school_address' => 'School Address',
-                'school_phone'   => 'School Phone',
-                'footer_text'    => 'Footer Text',
-                'generated_date' => 'Date of Generation',
-                'school_logo'    => 'School Logo (Image)',
-                'principal_signature' => 'Principal Signature (Image)',
+                'sch_name'  => 'School Name',
+                'sch_addr'  => 'School Address',
+                'sch_ph'    => 'School Phone',
+                'ftr_txt'   => 'Footer Text',
+                'gen_dt'    => 'Generated Date',
+                'sch_logo'  => 'School Logo',
+                'pr_sig'    => 'Principal Signature',
             ],
         ];
 
@@ -188,19 +190,19 @@ class EditorController extends Controller
             }
             $cat = "Subject: {$subject->name}";
             $baseFields[$cat] = [
-                "{$key}_obtained" => 'Total Marks Obtained',
-                "{$key}_full"     => 'Total Full Marks',
-                "{$key}_grade"    => 'Grade',
-                "{$key}_gpa"      => 'GPA',
+                "{$key}_obt" => 'Marks Obtained',
+                "{$key}_fl"  => 'Full Marks',
+                "{$key}_gr"  => 'Grade',
+                "{$key}_gp"  => 'GPA',
             ];
             
             if ($subject->has_sub_subjects) {
                 foreach ($subject->subSubjects as $sub) {
                     $subKey = strtolower(str_replace(' ', '_', $sub->name));
-                    $baseFields[$cat]["{$key}_{$subKey}_obtained"] = "{$sub->name} - Total Obtained";
-                    $baseFields[$cat]["{$key}_{$subKey}_full"]     = "{$sub->name} - Total Full";
-                    $baseFields[$cat]["{$key}_{$subKey}_grade"]    = "{$sub->name} - Grade";
-                    $baseFields[$cat]["{$key}_{$subKey}_gpa"]      = "{$sub->name} - GPA";
+                    $baseFields[$cat]["{$key}_{$subKey}_obt"] = "{$sub->name} - Obtained";
+                    $baseFields[$cat]["{$key}_{$subKey}_fl"]  = "{$sub->name} - Full";
+                    $baseFields[$cat]["{$key}_{$subKey}_gr"]  = "{$sub->name} - Grade";
+                    $baseFields[$cat]["{$key}_{$subKey}_gp"]  = "{$sub->name} - GPA";
 
                     $dbComponents = is_array($sub->exam_components) ? $sub->exam_components : [];
                     foreach (array_keys($dbComponents) as $comp) {

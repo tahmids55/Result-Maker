@@ -37,7 +37,11 @@ class MarksheetGenerationService
         // Handle Images (Logo and Signature) BEFORE text variables
         // Hack: flatten tags before inserting image to fix fragmented XML macros and ensure VML is correctly placed
         try { $processor->setValue('principal_signature', '${principal_signature}', 1); } catch (\Exception $e) {}
+        try { $processor->setValue('pr_sig', '${pr_sig}', 1); } catch (\Exception $e) {}
         try { $processor->setValue('school_logo', '${school_logo}', 1); } catch (\Exception $e) {}
+        try { $processor->setValue('sch_logo', '${sch_logo}', 1); } catch (\Exception $e) {}
+        try { $processor->setValue('student_photo', '${student_photo}', 1); } catch (\Exception $e) {}
+        try { $processor->setValue('st_photo', '${st_photo}', 1); } catch (\Exception $e) {}
 
         // Handle Images (Logo and Signature) using the $school already loaded above
         if ($school && $school->signature) {
@@ -46,10 +50,10 @@ class MarksheetGenerationService
             if (file_exists($sigPath)) {
                 try {
                     $processor->setImageValue('principal_signature', ['path' => $sigPath, 'width' => '120pt', 'height' => '40pt', 'ratio' => false]);
-                    \Illuminate\Support\Facades\Log::info("Signature inserted successfully.");
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Signature insert failed: " . $e->getMessage());
-                }
+                } catch (\Exception $e) {}
+                try {
+                    $processor->setImageValue('pr_sig', ['path' => $sigPath, 'width' => '120pt', 'height' => '40pt', 'ratio' => false]);
+                } catch (\Exception $e) {}
             } else {
                 \Illuminate\Support\Facades\Log::error("Signature file not found at: " . $sigPath);
             }
@@ -61,12 +65,31 @@ class MarksheetGenerationService
                 try {
                     $processor->setImageValue('school_logo', ['path' => $logoPath, 'width' => '80pt', 'height' => '80pt', 'ratio' => false]);
                 } catch (\Exception $e) {}
+                try {
+                    $processor->setImageValue('sch_logo', ['path' => $logoPath, 'width' => '80pt', 'height' => '80pt', 'ratio' => false]);
+                } catch (\Exception $e) {}
+            }
+        }
+
+        if ($student && $student->profile_photo) {
+            $photoPath = Storage::disk('public')->path($student->profile_photo);
+            if (file_exists($photoPath)) {
+                try {
+                    $processor->setImageValue('student_photo', ['path' => $photoPath, 'width' => '80pt', 'height' => '80pt', 'ratio' => false]);
+                } catch (\Exception $e) {}
+                try {
+                    $processor->setImageValue('st_photo', ['path' => $photoPath, 'width' => '80pt', 'height' => '80pt', 'ratio' => false]);
+                } catch (\Exception $e) {}
             }
         }
 
         // Wipe out image placeholders if they weren't matched and replaced above
         try { $processor->setValue('principal_signature', ''); } catch (\Exception) {}
         try { $processor->setValue('school_logo', ''); } catch (\Exception) {}
+        try { $processor->setValue('student_photo', ''); } catch (\Exception) {}
+        try { $processor->setValue('pr_sig', ''); } catch (\Exception) {}
+        try { $processor->setValue('sch_logo', ''); } catch (\Exception) {}
+        try { $processor->setValue('st_photo', ''); } catch (\Exception) {}
 
         // Fill all mapped placeholders
         $mappings = $template->field_mappings ?? [];
@@ -180,9 +203,10 @@ class MarksheetGenerationService
     ): array {
         $p = [];
 
-        // Student
+        // Student (Old)
         $p['student_name']      = $student->name;
         $p['gender']            = $student->gender ?? '';
+        $p['dob']               = $student->dob ? $student->dob->format('d M Y') : '';
         $p['roll']              = $student->roll;
         $p['registration_no']   = $student->registration_no ?? '';
         $p['father_name']       = $student->father_name ?? '';
@@ -191,11 +215,20 @@ class MarksheetGenerationService
         $p['section_name']      = $student->section->name ?? '';
         $p['session']           = $student->session ?? '';
 
+        // Student (Short)
+        $p['st_name'] = $p['student_name'];
+        $p['reg_no']  = $p['registration_no'];
+        $p['f_name']  = $p['father_name'];
+        $p['m_name']  = $p['mother_name'];
+        $p['cls']     = $p['class_name'];
+        $p['sec']     = $p['section_name'];
+        $p['sess']    = $p['session'];
+
         // Exam
         $p['exam_name']  = $exam->name;
         $p['exam_year']  = $exam->year;
 
-        // Result
+        // Result (Old)
         $p['total_marks']  = $result->total_marks;
         $p['full_marks']   = $result->full_marks;
         $p['percentage']   = number_format($result->percentage, 2) . '%';
@@ -204,6 +237,14 @@ class MarksheetGenerationService
         $p['division']     = $result->division;
         $p['result_status']= $result->is_passed ? 'PASSED' : 'FAILED';
         $p['rank']         = $result->rank ?? 'N/A';
+
+        // Result (Short)
+        $p['tot_mks'] = $p['total_marks'];
+        $p['fl_mks']  = $p['full_marks'];
+        $p['pct']     = $p['percentage'];
+        $p['grd']     = $p['grade'];
+        $p['div']     = $p['division'];
+        $p['status']  = $p['result_status'];
 
         foreach ($result->subject_details ?? [] as $detail) {
             $key = trim(strtolower($detail['subject_code'] ?? ''));
@@ -214,6 +255,11 @@ class MarksheetGenerationService
             $p["{$key}_full"]     = $detail['full'];
             $p["{$key}_grade"]    = $detail['grade'];
             $p["{$key}_gpa"]      = $detail['gpa'];
+            
+            $p["{$key}_obt"] = $detail['obtained'];
+            $p["{$key}_fl"]  = $detail['full'];
+            $p["{$key}_gr"]  = $detail['grade'];
+            $p["{$key}_gp"]  = $detail['gpa'];
 
             if (!empty($detail['has_sub_subjects'])) {
                 foreach ($detail['sub_subjects'] ?? [] as $subDetail) {
@@ -222,6 +268,11 @@ class MarksheetGenerationService
                     $p["{$key}_{$subKey}_full"]     = $subDetail['full'];
                     $p["{$key}_{$subKey}_grade"]    = $subDetail['grade'];
                     $p["{$key}_{$subKey}_gpa"]      = $subDetail['gpa'];
+                    
+                    $p["{$key}_{$subKey}_obt"] = $subDetail['obtained'];
+                    $p["{$key}_{$subKey}_fl"]  = $subDetail['full'];
+                    $p["{$key}_{$subKey}_gr"]  = $subDetail['grade'];
+                    $p["{$key}_{$subKey}_gp"]  = $subDetail['gpa'];
 
                     foreach ($subDetail['components'] ?? [] as $comp => $cd) {
                         $safeComp = strtolower(str_replace(' ', '_', $comp));
@@ -243,9 +294,16 @@ class MarksheetGenerationService
             $p['school_phone']   = $school->phone ?? '';
             $p['school_email']   = $school->email ?? '';
             $p['footer_text']    = $school->footer_text ?? '';
+            
+            $p['sch_name']  = $p['school_name'];
+            $p['sch_addr']  = $p['school_address'];
+            $p['sch_ph']    = $p['school_phone'];
+            $p['sch_eml']   = $p['school_email'];
+            $p['ftr_txt']   = $p['footer_text'];
         }
 
         $p['generated_date'] = now()->format('d/m/Y');
+        $p['gen_dt']         = $p['generated_date'];
 
         return $p;
     }

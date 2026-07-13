@@ -226,21 +226,22 @@ TESSERACT_LANG=eng+ben
 3. Use `{{placeholder_name}}` syntax for dynamic data:
 
 ```
-Student Name: {{student_name}}
+Student Name: {{st_name}}
 Roll No: {{roll}}
-Father's Name: {{father_name}}
-Class: {{class_name}}    Section: {{section_name}}
+Father's Name: {{f_name}}
+Class: {{cls}}    Section: {{sec}}
 Exam: {{exam_name}} {{exam_year}}
 
-Total Marks: {{total_marks}} / {{full_marks}}
-Percentage: {{percentage}}
+Total Marks: {{tot_mks}} / {{fl_mks}}
+Percentage: {{pct}}
 GPA: {{gpa}}
-Grade: {{grade}}
-Result: {{result_status}}
+Grade: {{grd}}
+Result: {{status}}
 Merit Position: {{rank}}
+Photo: {{st_photo}}
 
-School: {{school_name}}
-Generated: {{generated_date}}
+School: {{sch_name}}
+Generated: {{gen_dt}}
 ```
 
 4. For subject-wise marks, use: `{{subject_mathematics_obtained}}`, `{{subject_mathematics_grade}}`
@@ -250,28 +251,30 @@ Generated: {{generated_date}}
 
 | Placeholder | Value |
 |-------------|-------|
-| `{{student_name}}` | Full name of student |
+| `{{st_name}}` | Full name of student |
+| `{{st_photo}}` | Profile photo of student |
+| `{{dob}}` | Date of Birth |
 | `{{roll}}` | Roll number |
-| `{{registration_no}}` | Registration number |
-| `{{father_name}}` | Father's name |
-| `{{mother_name}}` | Mother's name |
-| `{{class_name}}` | Class name |
-| `{{section_name}}` | Section name |
-| `{{session}}` | Academic session |
+| `{{reg_no}}` | Registration number |
+| `{{f_name}}` | Father's name |
+| `{{m_name}}` | Mother's name |
+| `{{cls}}` | Class name |
+| `{{sec}}` | Section name |
+| `{{sess}}` | Academic session |
 | `{{exam_name}}` | Exam name |
 | `{{exam_year}}` | Exam year |
-| `{{total_marks}}` | Total obtained marks |
-| `{{full_marks}}` | Total full marks |
-| `{{percentage}}` | Percentage (e.g., 87.50%) |
+| `{{tot_mks}}` | Total obtained marks |
+| `{{fl_mks}}` | Total full marks |
+| `{{pct}}` | Percentage (e.g., 87.50%) |
 | `{{gpa}}` | GPA (e.g., 5.00) |
-| `{{grade}}` | Grade (A+, A, B...) |
-| `{{division}}` | Division (First Division...) |
-| `{{result_status}}` | PASSED or FAILED |
+| `{{grd}}` | Grade (A+, A, B...) |
+| `{{div}}` | Division (First Division...) |
+| `{{status}}` | PASSED or FAILED |
 | `{{rank}}` | Merit rank |
-| `{{school_name}}` | School name |
-| `{{footer_text}}` | Footer text from settings |
-| `{{generated_date}}` | Date of generation |
-| `{{subject_math_obtained}}` | Subject marks (replace math with slug) |
+| `{{sch_name}}` | School name |
+| `{{ftr_txt}}` | Footer text from settings |
+| `{{gen_dt}}` | Date of generation |
+| `{{subject_math_obt}}` | Subject marks (replace math with slug) |
 
 ### Uploading & Mapping
 
