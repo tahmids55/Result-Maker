@@ -37,6 +37,9 @@ class ResultCalculationService
         $isPassed      = true;
         $subjectDetails = [];
         $failedSubjects = 0;
+        
+        $totalGpa = 0.0;
+        $normalSubjectCount = 0;
 
         foreach ($subjects as $subject) {
             $subjectObtained = 0;
@@ -160,8 +163,32 @@ class ResultCalculationService
             $gradeInfo = GradeConfig::resolve($subjectPercentage);
 
             if (!$subjectPassed) {
-                $failedSubjects++;
+                // If a student fails any component (e.g. MCQ), the whole subject is failed, regardless of total percentage.
                 $gradeInfo = ['grade' => 'F', 'gpa' => 0.00];
+            }
+
+            if ($subject->is_optional) {
+                // For optional subject, failing it does not cause the student to fail the exam.
+                // (Notice we DO NOT increment $failedSubjects here)
+                
+                // GPA bonus is (Optional GPA - 2), min 0. (max is used programmatically to bound above 0)
+                $bonusGpa = max(0, $gradeInfo['gpa'] - 2.0);
+                $totalGpa += $bonusGpa;
+                
+                // Optional marks bonus: exclude 40, add the rest.
+                $bonusMarks = max(0, $subjectObtained - 40);
+                $totalObtained += $bonusMarks;
+                // Optional full marks are usually excluded from total full marks.
+            } else {
+                if (!$subjectPassed) {
+                    $failedSubjects++;
+                }
+                
+                $totalGpa += $gradeInfo['gpa'];
+                $normalSubjectCount++;
+                
+                $totalObtained += $subjectObtained;
+                $totalFull     += $subjectFull;
             }
 
             $subjectDetails[] = [
@@ -169,6 +196,7 @@ class ResultCalculationService
                 'subject_name'     => $subject->name,
                 'subject_code'     => $subject->code,
                 'has_sub_subjects' => $subject->has_sub_subjects,
+                'is_optional'      => $subject->is_optional,
                 'obtained'         => $subjectObtained,
                 'full'             => $subjectFull,
                 'percentage'       => $subjectPercentage,
@@ -178,18 +206,22 @@ class ResultCalculationService
                 'components'       => $componentDetails,
                 'sub_subjects'     => $subSubjectDetails,
             ];
-
-            $totalObtained += $subjectObtained;
-            $totalFull     += $subjectFull;
         }
 
         // Overall result
         $percentage  = $totalFull > 0 ? round(($totalObtained / $totalFull) * 100, 2) : 0;
-        $gradeInfo   = GradeConfig::resolve($percentage);
-        $isPassed    = $failedSubjects === 0 && $percentage >= 33;
         
-        if (!$isPassed) {
+        $averageGpa = $normalSubjectCount > 0 ? ($totalGpa / $normalSubjectCount) : 0;
+        $finalGpa = min(5.00, round($averageGpa, 2));
+        
+        $isPassed = $failedSubjects === 0;
+        
+        if ($isPassed) {
+            $finalGrade = GradeConfig::resolveFromGpa($finalGpa);
+            $gradeInfo = ['grade' => $finalGrade, 'gpa' => $finalGpa];
+        } else {
             $gradeInfo = ['grade' => 'F', 'gpa' => 0.00];
+            $isPassed = false;
         }
         
         $division    = $this->resolveDivision($percentage, $isPassed);

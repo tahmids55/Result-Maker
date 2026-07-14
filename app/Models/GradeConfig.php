@@ -37,4 +37,18 @@ class GradeConfig extends Model
 
         return ['grade' => 'F', 'gpa' => 0.00];
     }
+
+    /**
+     * Resolve grade from a calculated GPA value.
+     */
+    public static function resolveFromGpa(float $gpa): string
+    {
+        if ($gpa < 1.00) return 'F';
+        
+        $config = self::where('gpa', '<=', round($gpa, 2))
+            ->orderByDesc('gpa')
+            ->first();
+
+        return $config ? $config->grade : 'F';
+    }
 }
