@@ -27,16 +27,16 @@
 | Module | Description |
 |--------|-------------|
 | 🏫 Class & Section Management | Hierarchical class-section structure with bulk CSV import |
-| 👥 Student Management | Full CRUD, photo upload, CSV bulk import, search & filter |
-| 📚 Subject Management | Dynamic exam components (MCQ, CQ, Practical, Viva, etc.) per subject |
+| 👥 Student Management | Full CRUD, photo upload with auto-resize, CSV bulk import, search & filter |
+| 📚 Subject Management | Dynamic exam components (MCQ, CQ, Practical) & Optional/4th Subject logic |
 | 📝 Exam Management | Multiple exams per year, activate/deactivate, date ranges |
-| ✏️ Marks Entry | Spreadsheet-style entry with real-time GPA/grade calculation via Livewire |
+| ✏️ Marks Entry | Spreadsheet-style entry with real-time GPA calculation via Livewire |
 | 📊 Result Analytics | Class result sheet, merit list, grade distribution charts, CSV export |
-| 📄 Template Upload | Upload .docx MS Word templates, auto-detect `{{placeholders}}` |
-| 🖨️ Marksheet Generation | Fill templates with student data, download ZIP or individual .docx |
+| 📄 Template Editing | Built-in ONLYOFFICE editor with one-click placeholder insertion plugin |
+| 🖨️ Marksheet Generation | Fill templates with student data & photos, download ZIP or individual .docx |
 | 🔍 OCR Import | Upload photos of mark sheets, extract data with Tesseract OCR |
 | 💬 SMS / WhatsApp | Bulk result notifications via Twilio (SMS) or WhatsApp Business API |
-| ⚙️ Settings | School profile, grading system editor, database backup/restore |
+| ⚙️ Backups & Settings | School profile, standard BD grading system, automated MEGA cloud backups |
 
 ---
 
@@ -158,6 +158,15 @@ TESSERACT_PATH=/usr/bin/tesseract
 TESSERACT_LANG=eng+ben
 ```
 
+### Automated MEGA Cloud Backups
+ResultMaker includes a `backup.sh` script that automatically dumps the database, compresses it, and syncs it to a MEGA cloud account using `mega-cmd`.
+1. Install `mega-cmd` on your server.
+2. Login: `mega-login your@email.com password`
+3. Add to your server's cron (`crontab -e`):
+```cron
+0 2 * * * /path/to/ResultMaker/backup.sh >> /var/backups/resultmaker/logs/backup.log 2>&1
+```
+
 ---
 
 ## 📖 Usage Guide
@@ -210,10 +219,18 @@ TESSERACT_LANG=eng+ben
 
 ### 8. Generate Marksheets
 - First upload a template (see Template Guide below)
+- Go to **Templates** to edit the template directly in the browser using the ONLYOFFICE integration. Use the custom plugin sidebar to cleanly insert placeholders without breaking formatting.
 - Go to **Marksheets**
 - Select Class + Section + Exam + Template
 - **Small classes (≤30):** Click "Generate & Download ZIP" — instant download
 - **Large classes (50+):** Click "Queue Generation" — processes in background via Horizon
+
+### 9. Grading Logic (Bangladesh Standard)
+ResultMaker natively supports the Bangladesh education board rules for the **4th / Optional Subject**:
+- The optional subject is excluded from the average GPA divisor.
+- A student receives a bonus of `max(0, GPA - 2.0)` added to their total GPA.
+- A student receives a bonus of `max(0, marks - 40)` added to their total obtained marks.
+- Failing the optional subject results in `0` bonus and explicitly does **not** fail the student for the exam.
 
 ---
 

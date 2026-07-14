@@ -132,6 +132,11 @@ class StudentController extends Controller
                 Storage::disk('public')->delete($student->profile_photo);
             }
             $data['profile_photo'] = $this->resizeAndSaveImage($request->file('profile_photo'), 'students/photos');
+        } elseif ($request->boolean('remove_photo')) {
+            if ($student->profile_photo) {
+                Storage::disk('public')->delete($student->profile_photo);
+            }
+            $data['profile_photo'] = null;
         }
 
         $student->update($data);

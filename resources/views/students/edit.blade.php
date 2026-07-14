@@ -85,10 +85,23 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
                     @if($student->profile_photo)
-                        <img src="{{ $student->photo_url }}" class="w-12 h-12 rounded-full object-cover border mb-1">
+                        <div class="relative inline-block mb-3" id="existing_photo_container">
+                            <img src="{{ $student->photo_url }}" class="w-16 h-16 rounded-full object-cover border border-gray-200 shadow-sm">
+                            <button type="button" id="remove_existing_btn" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-md transition-transform hover:scale-110" title="Remove Photo">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            <input type="hidden" name="remove_photo" id="remove_photo_input" value="0">
+                        </div>
                     @endif
-                    <input type="file" name="profile_photo" accept="image/*"
-                           class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5">
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                               class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5">
+                        <button type="button" id="clear_photo_btn" class="hidden px-3 py-1.5 text-sm bg-red-100 text-red-600 hover:bg-red-200 rounded-lg font-medium transition-colors">
+                            Clear
+                        </button>
+                    </div>
                 </div>
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
@@ -124,5 +137,21 @@ function fetchSections(classId) {
             data.forEach(s => sel.innerHTML += `<option value="${s.id}" ${s.id == current ? 'selected' : ''}>${s.name}</option>`);
         });
 }
+
+document.getElementById('profile_photo').addEventListener('change', function() {
+    document.getElementById('clear_photo_btn').classList.toggle('hidden', !this.value);
+});
+
+document.getElementById('clear_photo_btn').addEventListener('click', function() {
+    document.getElementById('profile_photo').value = '';
+    this.classList.add('hidden');
+});
+
+@if($student->profile_photo)
+document.getElementById('remove_existing_btn')?.addEventListener('click', function() {
+    document.getElementById('existing_photo_container').style.display = 'none';
+    document.getElementById('remove_photo_input').value = '1';
+});
+@endif
 </script>
 @endpush

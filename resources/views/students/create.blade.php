@@ -96,8 +96,13 @@
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Profile Photo</label>
-                    <input type="file" name="profile_photo" accept="image/*"
-                           class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5">
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="profile_photo" name="profile_photo" accept="image/*"
+                               class="w-full text-sm border border-gray-300 rounded-lg px-3 py-1.5">
+                        <button type="button" id="clear_photo_btn" class="hidden px-3 py-1.5 text-sm bg-red-100 text-red-600 hover:bg-red-200 rounded-lg font-medium transition-colors">
+                            Clear
+                        </button>
+                    </div>
                 </div>
 
                 <div class="col-span-2">
@@ -140,5 +145,14 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => { document.getElementById('section_id').value = '{{ old('section_id') }}'; }, 300);
 });
 @endif
+
+document.getElementById('profile_photo').addEventListener('change', function() {
+    document.getElementById('clear_photo_btn').classList.toggle('hidden', !this.value);
+});
+
+document.getElementById('clear_photo_btn').addEventListener('click', function() {
+    document.getElementById('profile_photo').value = '';
+    this.classList.add('hidden');
+});
 </script>
 @endpush
