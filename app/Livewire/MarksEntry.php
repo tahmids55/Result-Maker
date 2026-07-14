@@ -2,12 +2,14 @@
 
 namespace App\Livewire;
 
+use App\DTOs\MarkEntryDTO;
 use App\Models\Exam;
 use App\Models\Mark;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Student;
 use App\Models\Subject;
+use App\Repositories\MarkRepository;
 use App\Services\ResultCalculationService;
 use Livewire\Component;
 
@@ -236,6 +238,74 @@ class MarksEntry extends Component
     {
         if (!$this->autoSaveEnabled) return;
         $this->saveMarks(true);
+    }
+
+    /**
+     * Batch save endpoint for the Alpine.js client-side state engine.
+     * Receives an array of dirty cells and persists them via single UPSERT.
+     */
+    public function saveBatch(array $batch): array
+    {
+        if (!$this->loaded || !$this->examId) {
+            return ['saved' => 0, 'errors' => ['Not loaded']];
+        }
+
+        $subjectCache = collect($this->subjects)->keyBy('id');
+        $dtos = [];
+        $errors = [];
+
+        foreach ($batch as $item) {
+            $parts = explode('_', $item['key'] ?? '', 4);
+            if (count($parts) < 4) {
+                $errors[] = "Invalid key: {$item['key']}";
+                continue;
+            }
+
+            [$sid, $subjId, $subId, $comp] = $parts;
+            $subject = $subjectCache->get((int) $subjId);
+            if (!$subject) continue;
+
+            $config = $this->resolveComponentConfig($subject, (int) $subId, $comp);
+            if (!$config) continue;
+
+            $obtained = (float) ($item['value'] ?? 0);
+            if ($obtained > $config['full']) {
+                $errors[] = "Exceeds max for {$comp}";
+                continue;
+            }
+
+            $dtos[] = new MarkEntryDTO(
+                studentId: (int) $sid,
+                subjectId: (int) $subjId,
+                subSubjectId: (int) $subId ?: null,
+                examId: $this->examId,
+                component: $comp,
+                obtained: $obtained,
+                full: (float) $config['full'],
+                pass: (float) $config['pass'],
+            );
+        }
+
+        $saved = app(MarkRepository::class)->upsertBatch($dtos);
+
+        return ['saved' => $saved, 'errors' => $errors];
+    }
+
+    /**
+     * Resolve the exam component config for a given subject/sub-subject/component combo.
+     */
+    private function resolveComponentConfig(array $subject, int $subId, string $comp): ?array
+    {
+        if ($subject['has_sub_subjects'] && $subId > 0) {
+            foreach ($subject['sub_subjects'] as $sub) {
+                if ($sub['id'] === $subId && isset($sub['exam_components'][$comp])) {
+                    return $sub['exam_components'][$comp];
+                }
+            }
+        } elseif (isset($subject['exam_components'][$comp])) {
+            return $subject['exam_components'][$comp];
+        }
+        return null;
     }
 
     public function saveAndCalculateMarks(ResultCalculationService $service): void
