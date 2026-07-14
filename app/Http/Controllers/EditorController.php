@@ -150,6 +150,7 @@ class EditorController extends Controller
                 'roll'      => 'Roll Number',
                 'reg_no'    => 'Registration No.',
                 'dob'       => 'Date of Birth',
+                'gender'    => 'Gender',
                 'f_name'    => 'Father\'s Name',
                 'm_name'    => 'Mother\'s Name',
                 'cls'       => 'Class Name',

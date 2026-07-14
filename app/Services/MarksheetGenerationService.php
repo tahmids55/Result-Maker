@@ -172,10 +172,14 @@ class MarksheetGenerationService
         $processor = new TemplateProcessor($fullPath);
 
         // PHPWord exposes getVariables() on TemplateProcessor, but they might be polluted with extra brackets if the user dragged/dropped poorly.
+        // Additionally, MS Word often splits text across multiple XML nodes (e.g., ${st_</w:t>...<w:t>photo}), causing raw XML to leak into the variables list.
         $vars = $processor->getVariables();
         $cleaned = [];
         foreach ($vars as $var) {
-            $cleaned[] = str_replace(['{', '}', '$'], '', $var);
+            // Strip any leaked XML tags to heal fragmented placeholders
+            $cleanVar = strip_tags($var);
+            // Then remove the macro wrappers
+            $cleaned[] = str_replace(['{', '}', '$'], '', $cleanVar);
         }
         return array_values(array_unique($cleaned));
     }

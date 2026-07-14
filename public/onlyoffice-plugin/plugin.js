@@ -99,13 +99,7 @@
     }
 
     function insertText(text) {
-        Asc.scope.textToInsert = text;
-        window.Asc.plugin.callCommand(function() {
-            var oDocument = Api.GetDocument();
-            var oParagraph = Api.CreateParagraph();
-            oParagraph.AddText(Asc.scope.textToInsert);
-            oDocument.InsertContent([oParagraph], true);
-        }, false);
+        window.Asc.plugin.executeMethod("PasteText", [text]);
     }
 
     window.Asc.plugin.button = function (id) {
