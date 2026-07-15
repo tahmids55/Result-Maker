@@ -1,4 +1,6 @@
-<div class="py-4 space-y-4">
+<div class="py-4 space-y-4"
+     x-data
+     @marks-hydrate.window="$store.marks.hydrate($event.detail[0] || $event.detail)">
 
     {{-- Selector Row --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -63,18 +65,45 @@
 
     {{-- Marks Grid --}}
     @if($loaded)
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm" wire:poll.60s="saveMarksSilent">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
         {{-- Header --}}
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
             <div class="text-sm font-semibold text-gray-700">
                 {{ count($students) }} Students ·
                 {{ count($subjects) }} Subjects
             </div>
-            <div class="flex items-center gap-2">
-                <button wire:click="saveMarks" wire:loading.attr="disabled"
+            <div class="flex items-center gap-3">
+                {{-- Save Status Indicator --}}
+                <div class="flex items-center gap-2 text-xs">
+                    <template x-if="$store.marks.saveState === 'saving'">
+                        <span class="flex items-center gap-1.5 text-blue-600 animate-pulse-save">
+                            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            Saving...
+                        </span>
+                    </template>
+                    <template x-if="$store.marks.saveState === 'saved'">
+                        <span class="flex items-center gap-1 text-green-600">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Saved
+                        </span>
+                    </template>
+                    <template x-if="$store.marks.saveState === 'error'">
+                        <span class="flex items-center gap-1 text-red-600">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"/></svg>
+                            Retrying...
+                        </span>
+                    </template>
+                    <template x-if="$store.marks.dirty.length > 0 && $store.marks.saveState === 'idle'">
+                        <span class="text-amber-600">
+                            <span x-text="$store.marks.dirty.length"></span> unsaved
+                        </span>
+                    </template>
+                </div>
+
+                <button @click="$store.marks.forceSave()"
+                        :disabled="$store.marks.dirty.length === 0"
                         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
-                    <span wire:loading.remove wire:target="saveMarks">💾 Save Marks</span>
-                    <span wire:loading wire:target="saveMarks">Saving...</span>
+                    💾 Save Marks
                 </button>
                 <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
                         class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
@@ -83,16 +112,6 @@
                 </button>
             </div>
         </div>
-
-        {{-- Validation Errors --}}
-        @if(!empty($errors_))
-        <div class="mx-5 mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p class="text-xs font-semibold text-yellow-800 mb-1">⚠ Validation Issues:</p>
-            @foreach($errors_ as $err)
-                <p class="text-xs text-yellow-700">• {{ $err }}</p>
-            @endforeach
-        </div>
-        @endif
 
         {{-- Spreadsheet Table --}}
         <div class="overflow-x-auto scrollbar-thin" x-data="marksGrid()">
@@ -145,24 +164,18 @@
                             @if($subject['has_sub_subjects'])
                                 @foreach($subject['sub_subjects'] as $sub)
                                     @foreach($sub['exam_components'] as $compName => $config)
-                                    @php
-                                        $val      = $marks[$sid][$subject['id']][$sub['id']][$compName] ?? '';
-                                        $obtained = (float) $val;
-                                        $full     = (float) $config['full'];
-                                        $pass     = (float) $config['pass'];
-                                        $isOver   = $val !== '' && $obtained > $full;
-                                        $isFail   = $val !== '' && $obtained < $pass && $val !== '';
-                                    @endphp
                                     <td class="border-b border-r border-gray-100 p-0">
                                         <input type="number"
-                                               wire:model.lazy="marks.{{ $sid }}.{{ $subject['id'] }}.{{ $sub['id'] }}.{{ $compName }}"
+                                               x-model.lazy="$store.marks.cells[{{ $sid }}][{{ $subject['id'] }}][{{ $sub['id'] }}]['{{ $compName }}']"
+                                               @change="$store.marks.setCell({{ $sid }}, {{ $subject['id'] }}, {{ $sub['id'] }}, '{{ $compName }}', $event.target.value)"
                                                min="0" max="{{ $config['full'] }}" step="0.5"
                                                data-row="{{ $r }}" data-col="{{ $c }}"
                                                @keydown="handleKey($event)"
-                                               class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors
-                                                      {{ $isOver ? 'bg-red-100 text-red-700 ring-1 ring-red-400'
-                                                         : ($isFail ? 'bg-orange-50 text-orange-700'
-                                                            : 'bg-transparent') }}"
+                                               class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors bg-transparent"
+                                               :class="{
+                                                   'bg-red-100 text-red-700 ring-1 ring-red-400': $store.marks.isOver({{ $sid }}, {{ $subject['id'] }}, {{ $sub['id'] }}, '{{ $compName }}', {{ $config['full'] }}),
+                                                   'bg-orange-50 text-orange-700': !$store.marks.isOver({{ $sid }}, {{ $subject['id'] }}, {{ $sub['id'] }}, '{{ $compName }}', {{ $config['full'] }}) && $store.marks.isFail({{ $sid }}, {{ $subject['id'] }}, {{ $sub['id'] }}, '{{ $compName }}', {{ $config['pass'] }})
+                                               }"
                                                placeholder="–">
                                     </td>
                                     @php $c++; @endphp
@@ -170,24 +183,18 @@
                                 @endforeach
                             @else
                                 @foreach($subject['exam_components'] as $compName => $config)
-                                @php
-                                    $val      = $marks[$sid][$subject['id']][0][$compName] ?? '';
-                                    $obtained = (float) $val;
-                                    $full     = (float) $config['full'];
-                                    $pass     = (float) $config['pass'];
-                                    $isOver   = $val !== '' && $obtained > $full;
-                                    $isFail   = $val !== '' && $obtained < $pass && $val !== '';
-                                @endphp
                                 <td class="border-b border-r border-gray-100 p-0">
                                     <input type="number"
-                                           wire:model.lazy="marks.{{ $sid }}.{{ $subject['id'] }}.0.{{ $compName }}"
+                                           x-model.lazy="$store.marks.cells[{{ $sid }}][{{ $subject['id'] }}][0]['{{ $compName }}']"
+                                           @change="$store.marks.setCell({{ $sid }}, {{ $subject['id'] }}, 0, '{{ $compName }}', $event.target.value)"
                                            min="0" max="{{ $config['full'] }}" step="0.5"
                                            data-row="{{ $r }}" data-col="{{ $c }}"
                                            @keydown="handleKey($event)"
-                                           class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors
-                                                  {{ $isOver ? 'bg-red-100 text-red-700 ring-1 ring-red-400'
-                                                     : ($isFail ? 'bg-orange-50 text-orange-700'
-                                                        : 'bg-transparent') }}"
+                                           class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors bg-transparent"
+                                           :class="{
+                                               'bg-red-100 text-red-700 ring-1 ring-red-400': $store.marks.isOver({{ $sid }}, {{ $subject['id'] }}, 0, '{{ $compName }}', {{ $config['full'] }}),
+                                               'bg-orange-50 text-orange-700': !$store.marks.isOver({{ $sid }}, {{ $subject['id'] }}, 0, '{{ $compName }}', {{ $config['full'] }}) && $store.marks.isFail({{ $sid }}, {{ $subject['id'] }}, 0, '{{ $compName }}', {{ $config['pass'] }})
+                                           }"
                                            placeholder="–">
                                 </td>
                                 @php $c++; @endphp
@@ -195,25 +202,17 @@
                             @endif
                         @endforeach
 
-                        {{-- Computed columns --}}
-                        <td class="px-2 py-1.5 text-center font-semibold text-gray-800 border-b border-r border-gray-100 bg-blue-50/40">
-                            {{ isset($rowTotals[$sid]) ? number_format($rowTotals[$sid], 1) : '–' }}
-                        </td>
-                        <td class="px-2 py-1.5 text-center text-gray-700 border-b border-r border-gray-100 bg-blue-50/40">
-                            {{ isset($rowPercentages[$sid]) ? number_format($rowPercentages[$sid], 1) . '%' : '–' }}
-                        </td>
-                        <td class="px-2 py-1.5 text-center text-gray-700 border-b border-r border-gray-100 bg-blue-50/40">
-                            {{ isset($rowGpas[$sid]) ? number_format($rowGpas[$sid], 2) : '–' }}
-                        </td>
+                        {{-- Computed columns from Alpine store --}}
+                        <td class="px-2 py-1.5 text-center font-semibold text-gray-800 border-b border-r border-gray-100 bg-blue-50/40"
+                            x-text="$store.marks.rowResults[{{ $sid }}]?.total ?? '–'"></td>
+                        <td class="px-2 py-1.5 text-center text-gray-700 border-b border-r border-gray-100 bg-blue-50/40"
+                            x-text="($store.marks.rowResults[{{ $sid }}]?.pct ?? '–') + ($store.marks.rowResults[{{ $sid }}] ? '%' : '')"></td>
+                        <td class="px-2 py-1.5 text-center text-gray-700 border-b border-r border-gray-100 bg-blue-50/40"
+                            x-text="$store.marks.rowResults[{{ $sid }}]?.gpa?.toFixed(2) ?? '–'"></td>
                         <td class="px-2 py-1.5 text-center border-b border-gray-100 bg-blue-50/40">
-                            @if(isset($rowGrades[$sid]))
-                                <span class="px-1.5 py-0.5 rounded text-xs font-bold
-                                    {{ ($rowPassed[$sid] ?? false) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
-                                    {{ $rowGrades[$sid] }}
-                                </span>
-                            @else
-                                <span class="text-gray-400">–</span>
-                            @endif
+                            <span class="px-1.5 py-0.5 rounded text-xs font-bold"
+                                  :class="$store.marks.rowResults[{{ $sid }}]?.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'"
+                                  x-text="$store.marks.rowResults[{{ $sid }}]?.grade ?? '–'"></span>
                         </td>
                     </tr>
                     @endforeach
@@ -225,13 +224,14 @@
         <div class="px-5 py-4 border-t border-gray-200 flex justify-between items-center">
             <p class="text-xs text-gray-500">
                 💡 Marks are color-coded: <span class="text-orange-600">orange = below pass mark</span>,
-                <span class="text-red-600">red = exceeds full marks</span>
+                <span class="text-red-600">red = exceeds full marks</span>.
+                Auto-saves 2s after last edit.
             </p>
             <div class="flex items-center gap-2">
-                <button wire:click="saveMarks" wire:loading.attr="disabled"
+                <button @click="$store.marks.forceSave()"
+                        :disabled="$store.marks.dirty.length === 0"
                         class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
-                    <span wire:loading.remove wire:target="saveMarks">💾 Save Marks</span>
-                    <span wire:loading wire:target="saveMarks">Saving...</span>
+                    💾 Save Marks
                 </button>
                 <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
                         class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
@@ -255,52 +255,3 @@
     @endif
 
 </div>
-
-@push('scripts')
-<script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('marksGrid', () => ({
-            handleKey(e) {
-                const input = e.target;
-                const row = parseInt(input.dataset.row);
-                const col = parseInt(input.dataset.col);
-                
-                let nextRow = row;
-                let nextCol = col;
-
-                switch (e.key) {
-                    case 'ArrowUp':
-                        nextRow = row - 1;
-                        break;
-                    case 'ArrowDown':
-                    case 'Enter':
-                        nextRow = row + 1;
-                        e.preventDefault();
-                        break;
-                    case 'ArrowLeft':
-                        if (input.selectionStart === 0) {
-                            nextCol = col - 1;
-                        }
-                        break;
-                    case 'ArrowRight':
-                        if (input.selectionStart === input.value.length) {
-                            nextCol = col + 1;
-                        }
-                        break;
-                    default:
-                        return; // Let default behavior happen
-                }
-
-                // If moving left/right triggered a column change
-                if (nextCol !== col || nextRow !== row) {
-                    const nextInput = document.querySelector(`.mark-input[data-row="${nextRow}"][data-col="${nextCol}"]`);
-                    if (nextInput) {
-                        nextInput.focus();
-                        nextInput.select();
-                    }
-                }
-            }
-        }))
-    });
-</script>
-@endpush

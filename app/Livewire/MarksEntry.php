@@ -128,6 +128,7 @@ class MarksEntry extends Component
                 'name'             => $s->name,
                 'code'             => $s->code,
                 'has_sub_subjects' => $s->has_sub_subjects,
+                'is_optional'      => $s->is_optional ?? false,
                 'exam_components'  => $s->exam_components,
                 'sub_subjects'     => $s->subSubjects->map(function($sub) {
                     return [
@@ -142,6 +143,15 @@ class MarksEntry extends Component
         $this->loaded = true;
 
         $this->recalculateAll();
+
+        // Dispatch hydration event for the Alpine.js client state engine
+        $this->dispatch('marks-hydrate', [
+            'marks'    => $marks,
+            'students' => $this->students,
+            'subjects' => $this->subjects,
+            'gradeMap' => $this->getGradeMap(),
+            'wireId'   => $this->getId(),
+        ]);
     }
 
     public function updatedMarks(): void
