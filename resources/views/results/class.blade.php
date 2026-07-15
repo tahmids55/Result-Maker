@@ -50,15 +50,50 @@
         </div>
     </div>
 
-    {{-- Chart + Grade Distribution --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {{-- Charts --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Pass / Fail Distribution</h3>
-            <canvas id="passChart" height="200"></canvas>
+            <x-accessible-chart
+                id="passChart"
+                type="bar"
+                title="Pass and Fail Count"
+                :labels="['Passed', 'Failed']"
+                :values="[$passedStudents, $totalStudents - $passedStudents]"
+                :colors="['#059669', '#DC2626']"
+                x-label="Status"
+                y-label="Students"
+                :legend="false"
+                height="200"
+            />
         </div>
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Grade Distribution</h3>
-            <canvas id="gradeChart" height="200"></canvas>
+            <x-accessible-chart
+                id="gradeChart"
+                type="doughnut"
+                title="Grade Distribution"
+                :labels="$gradeDistrib->keys()->toArray()"
+                :values="$gradeDistrib->values()->toArray()"
+                x-label="Grade"
+                y-label="Students"
+                height="200"
+            />
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Subject Performance (Avg GPA)</h3>
+            <x-accessible-chart
+                id="subjectChart"
+                type="bar"
+                title="Subject Average GPA"
+                :labels="$subjectAverages->pluck('name')->toArray()"
+                :values="$subjectAverages->pluck('avg_gpa')->toArray()"
+                :colors="['#4F46E5']"
+                x-label="Subject"
+                y-label="Avg GPA"
+                :legend="false"
+                height="200"
+            />
         </div>
     </div>
 
@@ -131,33 +166,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-const gradeData = @json($gradeDistrib);
-const gradeLabels = Object.keys(gradeData);
-const gradeCounts = Object.values(gradeData);
-const colors = ['#16a34a','#22c55e','#86efac','#3b82f6','#fbbf24','#f97316','#ef4444'];
-
-new Chart(document.getElementById('gradeChart'), {
-    type: 'doughnut',
-    data: {
-        labels: gradeLabels,
-        datasets: [{ data: gradeCounts, backgroundColor: colors }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'right' } } }
-});
-
-new Chart(document.getElementById('passChart'), {
-    type: 'bar',
-    data: {
-        labels: ['Passed', 'Failed'],
-        datasets: [{
-            data: [{{ $passedStudents }}, {{ $totalStudents - $passedStudents }}],
-            backgroundColor: ['#16a34a', '#ef4444'],
-            borderRadius: 8,
-        }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-});
-</script>
-@endpush

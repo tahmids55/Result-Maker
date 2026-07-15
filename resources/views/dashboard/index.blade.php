@@ -60,7 +60,18 @@
         {{-- Class Chart --}}
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
             <h2 class="text-base font-semibold text-gray-800 mb-4">Students per Class</h2>
-            <canvas id="classChart" height="180"></canvas>
+            <x-accessible-chart
+                id="classChart"
+                type="bar"
+                title="Students per Class"
+                :labels="$classStats->pluck('name')->toArray()"
+                :values="$classStats->pluck('count')->toArray()"
+                :colors="['#3b82f6']"
+                x-label="Class"
+                y-label="Students"
+                :legend="false"
+                height="180"
+            />
         </div>
 
         {{-- Recent Results --}}
@@ -107,27 +118,3 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-const ctx = document.getElementById('classChart');
-if (ctx) {
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: @json($classStats->pluck('name')),
-            datasets: [{
-                label: 'Students',
-                data: @json($classStats->pluck('count')),
-                backgroundColor: '#3b82f6',
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-        }
-    });
-}
-</script>
-@endpush
