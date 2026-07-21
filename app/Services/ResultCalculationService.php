@@ -270,8 +270,9 @@ class ResultCalculationService
 
         $results = Result::whereIn('student_id', $studentIds)
             ->where('exam_id', $examId)
+            ->orderByDesc('is_passed')
+            ->orderByDesc('gpa')
             ->orderByDesc('total_marks')
-            ->orderByDesc('percentage')
             ->get();
 
         $rank = 1;

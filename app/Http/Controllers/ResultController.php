@@ -49,18 +49,18 @@ class ResultController extends Controller
         $gradeDistrib   = $results->groupBy('grade')->map->count();
 
         // Subject-wise average GPA for the Subject Performance chart
-        $subjectAverages = collect();
+        $subjectAverages = [];
         foreach ($results as $r) {
             foreach ($r->subject_details ?? [] as $detail) {
                 $name = $detail['subject_name'] ?? 'Unknown';
-                if (!$subjectAverages->has($name)) {
+                if (!isset($subjectAverages[$name])) {
                     $subjectAverages[$name] = ['total_gpa' => 0, 'count' => 0];
                 }
                 $subjectAverages[$name]['total_gpa'] += $detail['gpa'] ?? 0;
                 $subjectAverages[$name]['count']++;
             }
         }
-        $subjectAverages = $subjectAverages->map(fn($v, $k) => [
+        $subjectAverages = collect($subjectAverages)->map(fn($v, $k) => [
             'name' => $k,
             'avg_gpa' => $v['count'] > 0 ? round($v['total_gpa'] / $v['count'], 2) : 0,
         ])->values();

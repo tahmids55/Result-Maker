@@ -26,7 +26,7 @@ class EditorController extends Controller
         // We'll use a hardcoded fallback to host.docker.internal if APP_URL is localhost for typical dev setups
         $publicHost = request()->getSchemeAndHttpHost();
         if (app()->environment('production')) {
-            $publicHost = env('APP_URL'); // Always force the secure Cloudflare URL in production
+            $publicHost = env('APP_URL'); 
         }
 
         // For local development, ONLYOFFICE is in Docker and cannot reach '127.0.0.1' (itself).
@@ -34,7 +34,7 @@ class EditorController extends Controller
         $internalHost = $publicHost;
         if (!app()->environment('production') && (str_contains($publicHost, 'localhost') || str_contains($publicHost, '127.0.0.1'))) {
             $internalHost = 'http://172.17.0.1:8000'; // Default docker bridge for linux
-            // Note: If ONLYOFFICE blocks private IPs on local, user must set allowPrivateIPAddress=true
+            // Note: If ONLYOFFICE blocks private IPs on local
         }
 
         $downloadUrl = $internalHost . route('onlyoffice.download', ['id' => $template->id, 'token' => $downloadToken], false);

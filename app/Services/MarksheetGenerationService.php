@@ -22,7 +22,7 @@ class MarksheetGenerationService
      * Generate marksheet for a single student.
      * Returns the generated file path.
      */
-    public function generateForStudent(Student $student, Exam $exam, MarksheetTemplate $template): string
+    public function generateForStudent(Student $student, Exam $exam, MarksheetTemplate $template, bool $saveToDb = true): string
     {
         // Ensure result is calculated
         $result = $this->resultService->calculateForStudent($student, $exam);
@@ -116,11 +116,13 @@ class MarksheetGenerationService
 
         $processor->saveAs($outputPath);
 
-        // Record in DB
-        GeneratedMarksheet::updateOrCreate(
-            ['student_id' => $student->id, 'exam_id' => $exam->id, 'template_id' => $template->id, 'user_id' => $student->user_id],
-            ['file_path' => $filename, 'file_type' => 'docx', 'generated_at' => now()]
-        );
+        // Record in DB if required
+        if ($saveToDb) {
+            GeneratedMarksheet::updateOrCreate(
+                ['student_id' => $student->id, 'exam_id' => $exam->id, 'template_id' => $template->id, 'user_id' => $student->user_id],
+                ['file_path' => $filename, 'file_type' => 'docx', 'generated_at' => now()]
+            );
+        }
 
         return $filename;
     }

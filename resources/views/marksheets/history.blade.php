@@ -56,8 +56,13 @@
                             <input type="checkbox" name="marksheet_ids[]" value="{{ $sheet->id }}" class="delete-checkbox rounded border-gray-300 text-red-600 focus:ring-red-500">
                         </td>
                         <td class="px-4 py-3">
-                            <div class="font-medium text-gray-900">{{ $sheet->student->name }}</div>
-                            <div class="text-xs text-gray-400">Roll: {{ $sheet->student->roll }}</div>
+                            @if($sheet->student_id)
+                                <div class="font-medium text-gray-900">{{ $sheet->student->name }}</div>
+                                <div class="text-xs text-gray-400">Roll: {{ $sheet->student->roll }}</div>
+                            @else
+                                <div class="font-medium text-gray-900">Batch Generation</div>
+                                <div class="text-xs text-blue-500">{{ $sheet->batch_name }}</div>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-gray-600">{{ $sheet->exam->name }} {{ $sheet->exam->year }}</td>
                         <td class="px-4 py-3 text-gray-500 text-xs">{{ $sheet->template->name }}</td>

@@ -32,40 +32,27 @@ class MarksheetController extends Controller
 
     public function generate(Request $request)
     {
-        // For queue, we will keep it simple for now and just dispatch the jobs.
-        // We could implement combining for queues later if needed.
         $request->validate([
             'class_id'    => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
             'section_id'  => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
             'exam_id'     => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
             'template_id' => ['required', \Illuminate\Validation\Rule::exists('marksheet_templates', 'id')->where('user_id', auth()->id())],
+            'output_mode' => 'required|in:individual,combined',
+            'output_format' => 'required|in:docx,pdf',
         ]);
 
-        $exam     = Exam::findOrFail($request->exam_id);
-        $template = MarksheetTemplate::findOrFail($request->template_id);
+        \App\Jobs\GenerateClassMarksheetsJob::dispatch(
+            $request->class_id,
+            $request->section_id,
+            $request->exam_id,
+            $request->template_id,
+            $request->output_mode,
+            $request->output_format,
+            $request->roll_start,
+            $request->roll_end
+        );
 
-        $query = Student::where('class_id', $request->class_id)
-            ->where('section_id', $request->section_id)
-            ->orderBy('roll');
-
-        if ($request->filled('roll_start')) {
-            $query->where('roll', '>=', $request->roll_start);
-        }
-        if ($request->filled('roll_end')) {
-            $query->where('roll', '<=', $request->roll_end);
-        }
-
-        $students = $query->get();
-
-        if ($students->isEmpty()) {
-            return back()->with('error', 'No students found for the selected class and section.');
-        }
-
-        foreach ($students as $student) {
-            GenerateMarksheetJob::dispatch($student, $exam, $template);
-        }
-
-        return back()->with('success', "Generation queued for {$students->count()} students. Check back shortly for downloads.");
+        return back()->with('success', "Batch generation queued. Check back shortly in the History tab for your download.");
     }
 
     public function generateSync(Request $request)
@@ -105,7 +92,7 @@ class MarksheetController extends Controller
         // Collect all individual DOCX files
         $generatedDocxPaths = [];
         foreach ($students as $student) {
-            $docPath = $this->service->generateForStudent($student, $exam, $template);
+            $docPath = $this->service->generateForStudent($student, $exam, $template, false);
             $generatedDocxPaths[] = Storage::disk('local')->path($docPath);
         }
 
@@ -117,12 +104,16 @@ class MarksheetController extends Controller
         if ($mode === 'combined') {
             // Merge all DOCX into one
             $mergedDocxPath = $tempDir . "/combined.docx";
-            $this->conversionService->mergeDocx($generatedDocxPaths, $mergedDocxPath);
+            $merged = $this->conversionService->mergeDocx($generatedDocxPaths, $mergedDocxPath);
+            
+            if (!$merged) {
+                return back()->with('error', 'Failed to merge DOCX files into a single document.');
+            }
 
             if ($format === 'pdf') {
                 $pdfPath = $this->conversionService->convertDocxToPdf($mergedDocxPath, $tempDir);
                 if (!$pdfPath) {
-                    return back()->with('error', 'Failed to convert to PDF. Please ensure LibreOffice is installed.');
+                    return back()->with('error', 'Failed to convert to PDF. Please ensure ONLYOFFICE Document Server is running.');
                 }
                 return response()->download($pdfPath, "marksheets_{$exam->name}_Combined.pdf")->deleteFileAfterSend(true);
             } else {
@@ -137,18 +128,25 @@ class MarksheetController extends Controller
                 return back()->with('error', "Cannot create zip archive.");
             }
 
+            $pdfFailed = false;
             foreach ($generatedDocxPaths as $index => $docxPath) {
                 $student = $students[$index];
                 if ($format === 'pdf') {
                     $pdfPath = $this->conversionService->convertDocxToPdf($docxPath, $tempDir);
                     if ($pdfPath) {
                         $zip->addFile($pdfPath, "{$student->roll}_{$student->name}.pdf");
+                    } else {
+                        $pdfFailed = true;
                     }
                 } else {
                     $zip->addFile($docxPath, "{$student->roll}_{$student->name}.docx");
                 }
             }
             $zip->close();
+
+            if ($pdfFailed) {
+                return back()->with('error', 'Failed to convert one or more marksheets to PDF. Please ensure ONLYOFFICE Document Server is running.');
+            }
 
             return response()->download($zipFileName, "marksheets_{$exam->name}_Individual.zip")->deleteFileAfterSend(true);
         }
@@ -160,7 +158,16 @@ class MarksheetController extends Controller
         if (!file_exists($path)) {
             abort(404, 'File not found.');
         }
-        $filename = "marksheet_{$marksheet->student->name}_{$marksheet->exam->name}.docx";
+        
+        if ($marksheet->student_id === null) {
+            // It's a batch
+            $ext = pathinfo($path, PATHINFO_EXTENSION);
+            $filename = "marksheet_batch_{$marksheet->exam->name}.{$ext}";
+        } else {
+            // It's an individual
+            $filename = "marksheet_{$marksheet->student->name}_{$marksheet->exam->name}.docx";
+        }
+        
         return response()->download($path, $filename);
     }
 
