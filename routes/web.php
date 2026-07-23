@@ -91,6 +91,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::get('marksheets', [MarksheetController::class, 'index'])->name('marksheets.index');
     Route::post('marksheets/generate', [MarksheetController::class, 'generate'])->name('marksheets.generate');
     Route::post('marksheets/generate-sync', [MarksheetController::class, 'generateSync'])->name('marksheets.generate-sync');
+    Route::get('marksheets/batch-progress', [MarksheetController::class, 'batchProgress'])->name('marksheets.batch-progress');
+    Route::get('marksheets/batch-dismiss', [MarksheetController::class, 'batchDismiss'])->name('marksheets.batch-dismiss');
     Route::get('marksheets/download/{marksheet}', [MarksheetController::class, 'download'])->name('marksheets.download');
     Route::get('marksheets/download-zip', [MarksheetController::class, 'downloadZip'])->name('marksheets.download-zip');
     Route::get('marksheets/history', [MarksheetController::class, 'history'])->name('marksheets.history');

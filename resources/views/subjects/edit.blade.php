@@ -51,10 +51,18 @@
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 space-y-3">
                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
                     <input type="checkbox" name="has_sub_subjects" value="1" x-model="hasSubSubjects" class="rounded text-blue-600 focus:ring-blue-500">
                     <span class="font-bold">This Subject has Sub-Subjects (Papers)</span>
+                </label>
+
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="checkbox" name="accumulated_pass_marks" value="1" {{ old('accumulated_pass_marks', $subject->accumulated_pass_marks) ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
+                    <div>
+                        <span class="font-bold">Use Accumulated Pass Marks</span>
+                        <p class="text-xs text-gray-500 mt-0.5">If checked, a student passes the subject if their total obtained marks ≥ total pass marks, regardless of failing individual components.</p>
+                    </div>
                 </label>
             </div>
 

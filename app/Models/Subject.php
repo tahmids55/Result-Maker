@@ -15,13 +15,14 @@ class Subject extends Model
 
     protected $fillable = [
         'name', 'code', 'class_id', 'section_id',
-        'exam_components', 'is_optional', 'sort_order', 'has_sub_subjects',
+        'exam_components', 'is_optional', 'sort_order', 'has_sub_subjects', 'accumulated_pass_marks',
     ];
 
     protected $casts = [
         'exam_components' => 'array',
         'is_optional'     => 'boolean',
         'has_sub_subjects' => 'boolean',
+        'accumulated_pass_marks' => 'boolean',
     ];
 
     public function schoolClass(): BelongsTo

@@ -4,6 +4,77 @@
 @section('content')
 <div class="py-4 space-y-4">
 
+    {{-- Batch Progress Tracker --}}
+    @if(!empty($activeBatchId))
+    <div x-data="batchTracker('{{ $activeBatchId }}')" x-init="startPolling()" class="relative">
+        {{-- Progress Card --}}
+        <div class="bg-white rounded-xl border shadow-sm overflow-hidden"
+             :class="status === 'failed' ? 'border-red-300' : status === 'done' ? 'border-green-300' : 'border-blue-300'">
+            
+            {{-- Progress Bar --}}
+            <div class="h-1.5 bg-gray-100">
+                <div class="h-full transition-all duration-500 ease-out rounded-r"
+                     :class="status === 'failed' ? 'bg-red-500' : status === 'done' ? 'bg-green-500' : 'bg-blue-500'"
+                     :style="'width: ' + pct + '%'"></div>
+            </div>
+
+            <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        {{-- Animated Icon --}}
+                        <template x-if="status === 'queued'">
+                            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center animate-pulse">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                        </template>
+                        <template x-if="status === 'processing'">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            </div>
+                        </template>
+                        <template x-if="status === 'done'">
+                            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            </div>
+                        </template>
+                        <template x-if="status === 'failed'">
+                            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                                <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </div>
+                        </template>
+
+                        <div>
+                            <div class="text-sm font-semibold text-gray-800" x-text="stage"></div>
+                            <div class="text-xs text-gray-500" x-text="detail"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-right">
+                        <div class="text-2xl font-bold tabular-nums"
+                             :class="status === 'failed' ? 'text-red-600' : status === 'done' ? 'text-green-600' : 'text-blue-600'"
+                             x-text="pct + '%'"></div>
+                        <div class="text-[10px] text-gray-400 uppercase tracking-wider" x-text="status"></div>
+                    </div>
+                </div>
+
+                {{-- Download button when done --}}
+                <template x-if="status === 'done' && downloadUrl">
+                    <a :href="downloadUrl"
+                       class="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm mt-2">
+                        ⬇ Download Ready – Click to Save
+                    </a>
+                </template>
+
+                {{-- Dismiss button --}}
+                <button @click="dismiss()" x-show="status === 'done' || status === 'failed'"
+                        class="text-xs text-gray-400 hover:text-gray-600 mt-2 block mx-auto">
+                    Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Queued Generation --}}
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -189,6 +260,66 @@ function fetchSections(classId, targetId) {
                 sel.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             });
         });
+}
+
+/**
+ * Alpine.js component for real-time batch progress tracking.
+ * Polls /marksheets/batch-progress every 2 seconds.
+ */
+function batchTracker(batchId) {
+    return {
+        batchId: batchId,
+        stage: 'Queued',
+        detail: 'Waiting for worker to pick up...',
+        pct: 0,
+        status: 'queued',
+        downloadUrl: null,
+        timer: null,
+
+        startPolling() {
+            this.poll(); // immediate first check
+            this.timer = setInterval(() => this.poll(), 2000);
+        },
+
+        async poll() {
+            try {
+                const res = await fetch(`/marksheets/batch-progress?batch_id=${this.batchId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+
+                if (data.status === 'unknown') return;
+
+                this.stage  = data.stage || 'Processing';
+                this.detail = data.detail || '';
+                this.pct    = data.pct || 0;
+                this.status = data.status || 'processing';
+
+                if (data.download_url) {
+                    this.downloadUrl = data.download_url;
+                }
+
+                // Stop polling when terminal state
+                if (data.status === 'done' || data.status === 'failed') {
+                    clearInterval(this.timer);
+                    this.timer = null;
+                }
+            } catch (e) {
+                // Network error, keep trying
+            }
+        },
+
+        async dismiss() {
+            if (this.timer) clearInterval(this.timer);
+            // Clear server-side active batch cache
+            try {
+                await fetch(`/marksheets/batch-dismiss?batch_id=${this.batchId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+            } catch(e) {}
+            this.$el.remove();
+        }
+    };
 }
 </script>
 @endpush

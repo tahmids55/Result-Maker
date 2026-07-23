@@ -50,12 +50,22 @@
                 </div>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4 space-y-3">
                 <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
                     <input type="checkbox" name="has_sub_subjects" value="1" x-model="hasSubSubjects" class="rounded text-blue-600 focus:ring-blue-500">
-                    <span class="font-bold">This Subject has Sub-Subjects (Papers)</span>
+                    <div>
+                        <span class="font-bold">This Subject has Sub-Subjects (Papers)</span>
+                        <p class="text-xs text-gray-500 mt-0.5">Check this if the subject consists of multiple papers (e.g. Bangla 1st Paper, Bangla 2nd Paper) that are graded separately.</p>
+                    </div>
                 </label>
-                <p class="text-xs text-gray-500 mt-1">Check this if the subject consists of multiple papers (e.g. Bangla 1st Paper, Bangla 2nd Paper) that are graded separately.</p>
+
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="checkbox" name="accumulated_pass_marks" value="1" {{ old('accumulated_pass_marks') ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
+                    <div>
+                        <span class="font-bold">Use Accumulated Pass Marks</span>
+                        <p class="text-xs text-gray-500 mt-0.5">If checked, a student passes the subject if their total obtained marks ≥ total pass marks, regardless of failing individual components.</p>
+                    </div>
+                </label>
             </div>
 
             {{-- Dynamic Components (No Sub-Subjects) --}}

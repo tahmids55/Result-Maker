@@ -35,6 +35,8 @@ class ExamController extends Controller
             'is_active'  => 'boolean',
         ]);
 
+        $data['is_active'] = $request->has('is_active');
+
         Exam::create($data);
         return redirect()->route('exams.index')->with('success', 'Exam created.');
     }
@@ -53,6 +55,8 @@ class ExamController extends Controller
             'end_date'   => 'nullable|date|after_or_equal:start_date',
             'is_active'  => 'boolean',
         ]);
+
+        $data['is_active'] = $request->has('is_active');
 
         $exam->update($data);
         return redirect()->route('exams.index')->with('success', 'Exam updated.');

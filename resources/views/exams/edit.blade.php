@@ -33,6 +33,7 @@
                 <input type="checkbox" name="is_active" value="1" {{ old('is_active', $exam->is_active) ? 'checked' : '' }} class="rounded text-blue-600">
                 Active Exam
             </label>
+
             <div class="flex gap-3 pt-2">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg text-sm transition-colors">
                     Update Exam

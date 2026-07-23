@@ -52,6 +52,8 @@ class SubjectController extends Controller
             'sub_subjects.*.name' => 'required_with:sub_subjects|string|max:100',
             'sub_subjects.*.components' => 'required_with:sub_subjects|array|min:1',
             'is_optional'       => 'boolean',
+            'has_sub_subjects'  => 'boolean',
+            'accumulated_pass_marks' => 'boolean',
             'sort_order'        => 'nullable|integer',
         ]);
 
@@ -76,6 +78,7 @@ class SubjectController extends Controller
             'has_sub_subjects'=> $hasSubSubjects,
             'exam_components' => $hasSubSubjects ? [] : $components,
             'is_optional'     => $request->boolean('is_optional'),
+            'accumulated_pass_marks' => $request->boolean('accumulated_pass_marks'),
             'sort_order'      => $request->sort_order ?? 0,
         ]);
 
@@ -123,6 +126,8 @@ class SubjectController extends Controller
             'sub_subjects'      => 'required_if:has_sub_subjects,1|array|min:1',
             'sub_subjects.*.name' => 'required_with:sub_subjects|string|max:100',
             'sub_subjects.*.components' => 'required_with:sub_subjects|array|min:1',
+            'is_optional'       => 'boolean',
+            'accumulated_pass_marks' => 'boolean',
         ]);
 
         $hasSubSubjects = $request->boolean('has_sub_subjects');
@@ -143,6 +148,7 @@ class SubjectController extends Controller
             'has_sub_subjects'=> $hasSubSubjects,
             'exam_components' => $hasSubSubjects ? [] : $components,
             'is_optional'     => $request->boolean('is_optional'),
+            'accumulated_pass_marks' => $request->boolean('accumulated_pass_marks'),
             'sort_order'      => $request->sort_order ?? 0,
         ]);
 
@@ -219,6 +225,7 @@ class SubjectController extends Controller
                     'section_id'      => $request->to_section_id,
                     'exam_components' => $subject->exam_components,
                     'is_optional'     => $subject->is_optional,
+                    'accumulated_pass_marks' => $subject->accumulated_pass_marks,
                     'sort_order'      => $subject->sort_order,
                 ]);
                 $count++;

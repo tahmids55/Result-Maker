@@ -28,6 +28,7 @@ class DocumentConversionService
             $cmd .= " " . escapeshellarg($in);
         }
 
+        $cmd .= " 2>&1";
         exec($cmd, $output, $returnVar);
         
         if ($returnVar !== 0) {

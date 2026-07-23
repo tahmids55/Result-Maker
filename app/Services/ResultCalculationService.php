@@ -44,6 +44,7 @@ class ResultCalculationService
         foreach ($subjects as $subject) {
             $subjectObtained = 0;
             $subjectFull     = 0;
+            $subjectPass     = 0;
             $subjectPassed   = true;
             $componentDetails = [];
             $subSubjectDetails = [];
@@ -122,7 +123,7 @@ class ResultCalculationService
                         'is_absent' => $data['is_absent'],
                     ];
 
-                    if (!$compPassed) {
+                    if (!$compPassed && !$subject->accumulated_pass_marks) {
                         $subjectPassed = false;
                     }
                 }
@@ -139,12 +140,13 @@ class ResultCalculationService
                     $isAbsent  = $mark?->is_absent ?? false;
                     $compPassed = !$isAbsent && ($obtained >= $passMarks);
 
-                    if (!$compPassed) {
+                    if (!$compPassed && !$subject->accumulated_pass_marks) {
                         $subjectPassed = false;
                     }
 
                     $subjectObtained += $obtained;
                     $subjectFull     += $fullMarks;
+                    $subjectPass     += $passMarks;
 
                     $componentDetails[$componentName] = [
                         'obtained'   => $obtained,
@@ -156,6 +158,24 @@ class ResultCalculationService
                 }
             }
 
+            if ($subject->accumulated_pass_marks) {
+                // For sub-subjects, the subjectPass hasn't been accumulated directly here. 
+                // Wait, I need to accumulate subjectPass for sub-subjects too. Let's fix that below.
+                // Let's just do it cleanly.
+                $totalPassMarks = 0;
+                if ($subject->has_sub_subjects) {
+                    foreach ($aggregatedComponents as $compName => $data) {
+                        $totalPassMarks += $data['pass'];
+                    }
+                } else {
+                    $totalPassMarks = $subjectPass;
+                }
+                
+                if ($subjectObtained < $totalPassMarks) {
+                    $subjectPassed = false;
+                }
+            }
+
             $subjectPercentage = $subjectFull > 0
                 ? round(($subjectObtained / $subjectFull) * 100, 2)
                 : 0;
@@ -163,7 +183,7 @@ class ResultCalculationService
             $gradeInfo = GradeConfig::resolve($subjectPercentage);
 
             if (!$subjectPassed) {
-                // If a student fails any component (e.g. MCQ), the whole subject is failed, regardless of total percentage.
+                // If a student fails the subject, the grade becomes F
                 $gradeInfo = ['grade' => 'F', 'gpa' => 0.00];
             }
 

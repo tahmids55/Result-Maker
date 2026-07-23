@@ -27,7 +27,11 @@ class MarksheetController extends Controller
         $classes   = SchoolClass::orderBy('sort_order')->get();
         $exams     = Exam::orderByDesc('year')->get();
         $templates = MarksheetTemplate::orderByDesc('is_default')->get();
-        return view('marksheets.index', compact('classes', 'exams', 'templates'));
+
+        // Check if the user has an active batch job running
+        $activeBatchId = \Illuminate\Support\Facades\Cache::get('marksheet_active_batch:' . auth()->id());
+
+        return view('marksheets.index', compact('classes', 'exams', 'templates', 'activeBatchId'));
     }
 
     public function generate(Request $request)
@@ -41,18 +45,73 @@ class MarksheetController extends Controller
             'output_format' => 'required|in:docx,pdf',
         ]);
 
+        $batchId = Str::uuid()->toString();
+
+        // Seed the cache so the frontend sees "Queued" immediately
+        \Illuminate\Support\Facades\Cache::put("marksheet_batch:{$batchId}", [
+            'stage'   => 'Queued',
+            'current' => 0,
+            'total'   => 0,
+            'pct'     => 0,
+            'detail'  => 'Waiting for worker to pick up...',
+            'status'  => 'queued',
+        ], 3600);
+
+        // Store active batch for this user so it persists across page navigations
+        \Illuminate\Support\Facades\Cache::put('marksheet_active_batch:' . auth()->id(), $batchId, 3600);
+
         \App\Jobs\GenerateClassMarksheetsJob::dispatch(
+            $batchId,
             $request->class_id,
             $request->section_id,
             $request->exam_id,
             $request->template_id,
             $request->output_mode,
             $request->output_format,
+            auth()->id(),
             $request->roll_start,
             $request->roll_end
         );
 
-        return back()->with('success', "Batch generation queued. Check back shortly in the History tab for your download.");
+        return back();
+    }
+
+    /**
+     * API endpoint polled by the frontend to check batch generation progress.
+     */
+    public function batchProgress(Request $request)
+    {
+        $batchId = $request->query('batch_id');
+        if (!$batchId) {
+            return response()->json(['status' => 'unknown']);
+        }
+
+        $data = \Illuminate\Support\Facades\Cache::get("marksheet_batch:{$batchId}");
+        if (!$data) {
+            return response()->json(['status' => 'unknown']);
+        }
+
+        // If done, include the download URL
+        if ($data['status'] === 'done' && !empty($data['download_id'])) {
+            $data['download_url'] = route('marksheets.download', $data['download_id']);
+        }
+
+        return response()->json($data);
+    }
+
+    /**
+     * Dismiss the active batch tracker for the current user.
+     */
+    public function batchDismiss(Request $request)
+    {
+        \Illuminate\Support\Facades\Cache::forget('marksheet_active_batch:' . auth()->id());
+
+        $batchId = $request->query('batch_id');
+        if ($batchId) {
+            \Illuminate\Support\Facades\Cache::forget("marksheet_batch:{$batchId}");
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     public function generateSync(Request $request)
@@ -96,10 +155,9 @@ class MarksheetController extends Controller
             $generatedDocxPaths[] = Storage::disk('local')->path($docPath);
         }
 
-        $tempDir = Storage::disk('local')->path("temp_generation/" . Str::uuid());
-        if (!is_dir($tempDir)) {
-            mkdir($tempDir, 0775, true);
-        }
+        $tempDirRelative = "batch_temp/" . Str::uuid();
+        Storage::disk('local')->makeDirectory($tempDirRelative);
+        $tempDir = Storage::disk('local')->path($tempDirRelative);
 
         if ($mode === 'combined') {
             // Merge all DOCX into one
