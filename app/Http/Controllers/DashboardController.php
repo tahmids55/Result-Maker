@@ -14,7 +14,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $stats = cache()->remember('dashboard_stats_' . auth()->id(), 300, function () {
+        $stats = cache()->remember('dashboard_stats_' . auth()->user()->owner_id, 300, function () {
             return [
                 'total_classes'    => SchoolClass::count(),
                 'total_students'   => Student::count(),
@@ -38,6 +38,16 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return view('dashboard.index', compact('stats', 'classStats', 'recentResults'));
+        $teacherSubjects = collect();
+        if (auth()->user()->isTeacher()) {
+            $teacherSubjects = auth()->user()->assignedSubjects()
+                ->with(['schoolClass', 'section'])
+                ->get()
+                ->groupBy(function($subject) {
+                    return $subject->schoolClass->name . ' - Section ' . $subject->section->name;
+                });
+        }
+
+        return view('dashboard.index', compact('stats', 'classStats', 'recentResults', 'teacherSubjects'));
     }
 }

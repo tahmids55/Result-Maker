@@ -46,6 +46,14 @@ class Subject extends Model
     }
 
     /**
+     * Teachers assigned to this subject.
+     */
+    public function teachers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'subject_teacher')->withTimestamps();
+    }
+
+    /**
      * Total full marks across all components.
      */
     public function getTotalFullMarksAttribute(): float

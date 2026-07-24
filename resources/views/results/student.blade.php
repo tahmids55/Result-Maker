@@ -22,6 +22,7 @@
     @else
 
     {{-- Summary Card --}}
+    @if(auth()->user()->isAdmin())
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
             <div class="text-2xl font-bold text-gray-900">{{ $result->total_marks }}</div>
@@ -46,6 +47,7 @@
             <div class="text-xs text-gray-500 mt-1">{{ $result->division }}</div>
         </div>
     </div>
+    @endif
 
     {{-- Subject Breakdown --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -65,7 +67,14 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
+                @php
+                    $isTeacher = auth()->user()->isTeacher();
+                    $assignedIds = $isTeacher ? auth()->user()->assignedSubjects()->pluck('subjects.id')->toArray() : [];
+                @endphp
                 @foreach($result->subject_details ?? [] as $detail)
+                    @if($isTeacher && !in_array($detail['subject_id'] ?? 0, $assignedIds))
+                        @continue
+                    @endif
                 <tr class="hover:bg-gray-50 {{ !$detail['is_passed'] ? 'bg-red-50/30' : '' }}">
                     <td class="px-4 py-3">
                         <div class="font-medium text-gray-900">{{ $detail['subject_name'] }}</div>
@@ -103,6 +112,7 @@
     </div>
 
     {{-- Actions --}}
+    @if(auth()->user()->isAdmin())
     <div class="flex gap-3 print:hidden">
         @php $generated = $student->generatedMarksheets()->where('exam_id', $exam->id)->latest()->first(); @endphp
         @if($generated)
@@ -125,6 +135,7 @@
             📄 Export to PDF
         </button>
     </div>
+    @endif
 
     @endif
 </div>

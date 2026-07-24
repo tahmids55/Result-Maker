@@ -29,7 +29,7 @@ class MarkRepository
             'obtained_marks' => $d->obtained,
             'full_marks'     => $d->full,
             'pass_marks'     => $d->pass,
-            'user_id'        => auth()->id(),
+            'user_id'        => auth()->user()->owner_id,
             'updated_at'     => now(),
             'created_at'     => now(),
         ], $dtos);

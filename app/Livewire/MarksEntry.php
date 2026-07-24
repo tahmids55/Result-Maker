@@ -16,9 +16,13 @@ use Livewire\Component;
 class MarksEntry extends Component
 {
     // Selectors
+    #[\Livewire\Attributes\Url]
     public ?int $classId   = null;
+    #[\Livewire\Attributes\Url]
     public ?int $sectionId = null;
+    #[\Livewire\Attributes\Url]
     public ?int $examId    = null;
+    #[\Livewire\Attributes\Url]
     public ?int $subjectId = null;
 
     // Data
@@ -42,6 +46,10 @@ class MarksEntry extends Component
     public function mount(): void
     {
         $this->autoSaveEnabled = (bool) (\App\Models\School::getSettings()?->auto_save_marks ?? false);
+
+        if ($this->classId && $this->sectionId && $this->examId) {
+            $this->loadMarks();
+        }
     }
 
     public function updatedClassId(): void
@@ -83,6 +91,12 @@ class MarksEntry extends Component
             ->where('class_id', $this->classId)
             ->where('section_id', $this->sectionId)
             ->orderBy('sort_order');
+
+        // Teachers can only enter marks for their assigned subjects
+        if (auth()->user()->isTeacher()) {
+            $assignedIds = auth()->user()->assignedSubjects()->pluck('subjects.id');
+            $subjectsQuery->whereIn('id', $assignedIds);
+        }
 
         if ($this->subjectId) {
             $subjectsQuery->where('id', $this->subjectId);
@@ -481,12 +495,20 @@ class MarksEntry extends Component
             : collect();
         $exams    = Exam::orderByDesc('year')->orderBy('name')->get();
 
-        $availableSubjects = ($this->classId && $this->sectionId)
-            ? Subject::where('class_id', $this->classId)
+        $availableSubjects = collect();
+        if ($this->classId && $this->sectionId) {
+            $query = Subject::where('class_id', $this->classId)
                      ->where('section_id', $this->sectionId)
-                     ->orderBy('sort_order')
-                     ->get()
-            : collect();
+                     ->orderBy('sort_order');
+
+            // Teachers can only see their assigned subjects
+            if (auth()->user()->isTeacher()) {
+                $assignedIds = auth()->user()->assignedSubjects()->pluck('subjects.id');
+                $query->whereIn('id', $assignedIds);
+            }
+
+            $availableSubjects = $query->get();
+        }
 
         return view('livewire.marks-entry', compact('classes', 'sections', 'exams', 'availableSubjects'));
     }

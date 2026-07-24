@@ -4,6 +4,7 @@
 @section('content')
 <div class="py-4 space-y-6">
 
+    @if(auth()->user()->isAdmin())
     {{-- Stats Cards --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         @php
@@ -114,6 +115,82 @@
             Enter Marks →
         </a>
     </div>
+    @endif
+    
+    @else
+    {{-- Teacher Dashboard --}}
+    
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Welcome, {{ auth()->user()->name }}!</h2>
+        <p class="text-gray-500 mt-1">Here is an overview of your assigned subjects and recent activities.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-blue-50 rounded-xl border border-blue-200 p-5 shadow-sm flex items-center justify-between">
+            <div>
+                <div class="text-3xl font-bold text-blue-700">
+                    {{ auth()->user()->assignedSubjects()->count() }}
+                </div>
+                <div class="text-sm font-medium text-blue-600 mt-1">Assigned Subjects</div>
+            </div>
+            <div class="text-4xl">📚</div>
+        </div>
+        
+        @if($stats['active_exam'])
+        <div class="bg-green-50 rounded-xl border border-green-200 p-5 shadow-sm flex flex-col justify-center">
+            <div class="text-sm font-medium text-green-700">Active Exam</div>
+            <div class="text-xl font-bold text-green-800 mt-1">{{ $stats['active_exam']->name }} {{ $stats['active_exam']->year }}</div>
+        </div>
+        @else
+        <div class="bg-gray-50 rounded-xl border border-gray-200 p-5 shadow-sm flex items-center justify-center">
+            <span class="text-gray-500">No active exam at the moment.</span>
+        </div>
+        @endif
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-sm font-semibold text-gray-700">Your Assigned Classes & Subjects</h3>
+        </div>
+        
+        @if($teacherSubjects->isEmpty())
+            <div class="p-8 text-center text-gray-500">
+                You have not been assigned any subjects yet. Please contact the administrator.
+            </div>
+        @else
+            <div class="divide-y divide-gray-100 p-5 space-y-6">
+                @foreach($teacherSubjects as $groupName => $subjects)
+                    <div>
+                        <h4 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">{{ $groupName }}</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @foreach($subjects as $subject)
+                                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div class="font-semibold text-gray-900 text-lg">{{ $subject->name }}</div>
+                                    @if($subject->code)<div class="text-xs text-gray-500 mb-3">Code: {{ $subject->code }}</div>@endif
+                                    
+                                    <div class="flex gap-2 mt-4">
+                                        @php
+                                            $queryParams = ['classId' => $subject->class_id, 'sectionId' => $subject->section_id, 'subjectId' => $subject->id];
+                                            if ($stats['active_exam']) $queryParams['examId'] = $stats['active_exam']->id;
+                                        @endphp
+                                        <a href="{{ route('marks.index', $queryParams) }}" 
+                                           class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center text-xs font-medium py-2 rounded-lg transition-colors">
+                                            Enter Marks
+                                        </a>
+                                        <a href="{{ route('results.index') }}" 
+                                           class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-center text-xs font-medium py-2 rounded-lg transition-colors">
+                                            Preview Result
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     @endif
 </div>
 @endsection

@@ -18,15 +18,20 @@ class ResultController extends Controller
     {
         $classes = SchoolClass::orderBy('sort_order')->get();
         $exams   = Exam::orderByDesc('year')->get();
-        return view('results.index', compact('classes', 'exams'));
+        $teacherSubjects = auth()->user()->isTeacher() 
+            ? auth()->user()->assignedSubjects()->with(['schoolClass', 'section'])->get() 
+            : collect();
+            
+        return view('results.index', compact('classes', 'exams', 'teacherSubjects'));
     }
 
     public function classResult(Request $request)
     {
         $request->validate([
-            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
-            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
+            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
+            'subject_id' => ['nullable', \Illuminate\Validation\Rule::exists('subjects', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
@@ -65,18 +70,23 @@ class ResultController extends Controller
             'avg_gpa' => $v['count'] > 0 ? round($v['total_gpa'] / $v['count'], 2) : 0,
         ])->values();
 
+        $teacherSubject = null;
+        if ($request->filled('subject_id') && auth()->user()->isTeacher()) {
+            $teacherSubject = \App\Models\Subject::findOrFail($request->subject_id);
+        }
+
         return view('results.class', compact(
             'results', 'exam', 'class', 'section',
-            'totalStudents', 'passedStudents', 'gradeDistrib', 'subjectAverages'
+            'totalStudents', 'passedStudents', 'gradeDistrib', 'subjectAverages', 'teacherSubject'
         ));
     }
 
     public function recalculate(Request $request)
     {
         $request->validate([
-            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
-            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
+            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam = Exam::findOrFail($request->exam_id);
@@ -101,9 +111,9 @@ class ResultController extends Controller
     public function meritList(Request $request)
     {
         $request->validate([
-            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
-            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
+            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
@@ -126,9 +136,9 @@ class ResultController extends Controller
     public function exportExcel(Request $request)
     {
         $request->validate([
-            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->id())],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->id())],
-            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->id())],
+            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);

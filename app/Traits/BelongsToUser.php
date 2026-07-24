@@ -10,13 +10,15 @@ trait BelongsToUser
     {
         static::addGlobalScope('user_id', function (Builder $builder) {
             if (auth()->check()) {
-                $builder->where($builder->getModel()->getTable() . '.user_id', auth()->id());
+                // Teachers see their admin's data; admins see their own data
+                $builder->where($builder->getModel()->getTable() . '.user_id', auth()->user()->owner_id);
             }
         });
 
         static::creating(function ($model) {
             if (auth()->check() && empty($model->user_id)) {
-                $model->user_id = auth()->id();
+                // Data always belongs to the admin, even when created by a teacher
+                $model->user_id = auth()->user()->owner_id;
             }
         });
     }

@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SmsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\TeacherController;
 use Illuminate\Support\Facades\Route;
 
 // ── Authentication ──────────────────────────────────────────────────────────
@@ -42,33 +43,10 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Classes
-    Route::resource('classes', ClassController::class)->except(['show']);
-    Route::get('classes/{class}/details', [ClassController::class, 'show'])->name('classes.show');
-
-    // Sections
-    Route::resource('sections', SectionController::class);
-    Route::post('sections/bulk-import', [SectionController::class, 'bulkImport'])->name('sections.bulk-import');
-
-    // Students
-    Route::resource('students', StudentController::class);
-    Route::post('students/bulk-import', [StudentController::class, 'bulkImport'])->name('students.bulk-import');
-    Route::post('students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
-    Route::get('api/sections-by-class', [StudentController::class, 'getSectionsByClass'])->name('api.sections-by-class');
-
-    // Subjects
-    Route::resource('subjects', SubjectController::class);
-    Route::post('subjects/{subject}/copy', [SubjectController::class, 'copy'])->name('subjects.copy');
-    Route::post('subjects/copy-to-class', [SubjectController::class, 'copyToClass'])->name('subjects.copy-to-class');
-
-    // Exams
-    Route::resource('exams', ExamController::class);
-    Route::post('exams/{exam}/toggle-active', [ExamController::class, 'toggleActive'])->name('exams.toggle-active');
-
-    // Marks Entry (Livewire)
+    // Marks Entry (Livewire) — accessible by both admin AND teacher
     Route::get('marks', fn() => view('marks.index'))->name('marks.index');
 
-    // Results
+    // Results — accessible by both admin AND teacher (read-only for teachers is fine)
     Route::get('results', [ResultController::class, 'index'])->name('results.index');
     Route::post('results/class', [ResultController::class, 'classResult'])->name('results.class');
     Route::post('results/recalculate', [ResultController::class, 'recalculate'])->name('results.recalculate');
@@ -76,46 +54,78 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::post('results/export', [ResultController::class, 'exportExcel'])->name('results.export');
     Route::get('results/{student}/{exam}', [ResultController::class, 'studentResult'])->name('results.student');
 
-    // Marksheet Templates
-    Route::get('templates', [MarksheetTemplateController::class, 'index'])->name('templates.index');
-    Route::get('templates/create', [MarksheetTemplateController::class, 'create'])->name('templates.create');
-    Route::post('templates', [MarksheetTemplateController::class, 'store'])->name('templates.store');
-    Route::get('templates/{template}/map', [MarksheetTemplateController::class, 'showMapping'])->name('templates.map');
-    Route::post('templates/{template}/map', [MarksheetTemplateController::class, 'saveMapping'])->name('templates.save-map');
-    Route::post('templates/{template}/set-default', [MarksheetTemplateController::class, 'setDefault'])->name('templates.set-default');
-    Route::put('templates/{template}', [MarksheetTemplateController::class, 'update'])->name('templates.update');
-    Route::delete('templates/{template}', [MarksheetTemplateController::class, 'destroy'])->name('templates.destroy');
-    Route::get('editor/{id}', [\App\Http\Controllers\EditorController::class, 'edit'])->name('onlyoffice.edit');
+    // API used by dropdowns (shared)
+    Route::get('api/sections-by-class', [StudentController::class, 'getSectionsByClass'])->name('api.sections-by-class');
 
-    // Marksheet Generation
-    Route::get('marksheets', [MarksheetController::class, 'index'])->name('marksheets.index');
-    Route::post('marksheets/generate', [MarksheetController::class, 'generate'])->name('marksheets.generate');
-    Route::post('marksheets/generate-sync', [MarksheetController::class, 'generateSync'])->name('marksheets.generate-sync');
-    Route::get('marksheets/batch-progress', [MarksheetController::class, 'batchProgress'])->name('marksheets.batch-progress');
-    Route::get('marksheets/batch-dismiss', [MarksheetController::class, 'batchDismiss'])->name('marksheets.batch-dismiss');
-    Route::get('marksheets/download/{marksheet}', [MarksheetController::class, 'download'])->name('marksheets.download');
-    Route::get('marksheets/download-zip', [MarksheetController::class, 'downloadZip'])->name('marksheets.download-zip');
-    Route::get('marksheets/history', [MarksheetController::class, 'history'])->name('marksheets.history');
-    Route::post('marksheets/bulk-delete', [MarksheetController::class, 'bulkDelete'])->name('marksheets.bulk-delete');
+    // ── Admin-only routes ───────────────────────────────────────────
+    Route::middleware('admin')->group(function () {
 
-    // OCR
-    Route::get('ocr', [OcrController::class, 'index'])->name('ocr.index');
-    Route::post('ocr/upload', [OcrController::class, 'upload'])->name('ocr.upload');
-    Route::post('ocr/bulk-upload', [OcrController::class, 'bulkUpload'])->name('ocr.bulk-upload');
-    Route::get('ocr/{import}', [OcrController::class, 'show'])->name('ocr.show');
-    Route::post('ocr/{import}/save-marks', [OcrController::class, 'saveMarks'])->name('ocr.save-marks');
+        // Classes
+        Route::resource('classes', ClassController::class)->except(['show']);
+        Route::get('classes/{class}/details', [ClassController::class, 'show'])->name('classes.show');
 
-    // SMS / WhatsApp
-    Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
-    Route::post('sms/send-bulk', [SmsController::class, 'sendBulk'])->name('sms.send-bulk');
-    Route::post('sms/send-single', [SmsController::class, 'sendSingle'])->name('sms.send-single');
-    Route::get('sms/logs', [SmsController::class, 'logs'])->name('sms.logs');
+        // Sections
+        Route::resource('sections', SectionController::class);
+        Route::post('sections/bulk-import', [SectionController::class, 'bulkImport'])->name('sections.bulk-import');
 
-    // Settings
-    Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
-    Route::post('settings/school', [SettingsController::class, 'updateSchool'])->name('settings.school');
-    Route::post('settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
-    Route::post('settings/grades', [SettingsController::class, 'updateGrades'])->name('settings.grades');
-    Route::get('settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
-    Route::post('settings/restore', [SettingsController::class, 'restore'])->name('settings.restore');
+        // Students
+        Route::resource('students', StudentController::class);
+        Route::post('students/bulk-import', [StudentController::class, 'bulkImport'])->name('students.bulk-import');
+        Route::post('students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
+
+        // Subjects
+        Route::resource('subjects', SubjectController::class);
+        Route::post('subjects/{subject}/copy', [SubjectController::class, 'copy'])->name('subjects.copy');
+        Route::post('subjects/copy-to-class', [SubjectController::class, 'copyToClass'])->name('subjects.copy-to-class');
+
+        // Exams
+        Route::resource('exams', ExamController::class);
+        Route::post('exams/{exam}/toggle-active', [ExamController::class, 'toggleActive'])->name('exams.toggle-active');
+
+        // Marksheet Templates
+        Route::get('templates', [MarksheetTemplateController::class, 'index'])->name('templates.index');
+        Route::get('templates/create', [MarksheetTemplateController::class, 'create'])->name('templates.create');
+        Route::post('templates', [MarksheetTemplateController::class, 'store'])->name('templates.store');
+        Route::get('templates/{template}/map', [MarksheetTemplateController::class, 'showMapping'])->name('templates.map');
+        Route::post('templates/{template}/map', [MarksheetTemplateController::class, 'saveMapping'])->name('templates.save-map');
+        Route::post('templates/{template}/set-default', [MarksheetTemplateController::class, 'setDefault'])->name('templates.set-default');
+        Route::put('templates/{template}', [MarksheetTemplateController::class, 'update'])->name('templates.update');
+        Route::delete('templates/{template}', [MarksheetTemplateController::class, 'destroy'])->name('templates.destroy');
+        Route::get('editor/{id}', [\App\Http\Controllers\EditorController::class, 'edit'])->name('onlyoffice.edit');
+
+        // Marksheet Generation
+        Route::get('marksheets', [MarksheetController::class, 'index'])->name('marksheets.index');
+        Route::post('marksheets/generate', [MarksheetController::class, 'generate'])->name('marksheets.generate');
+        Route::post('marksheets/generate-sync', [MarksheetController::class, 'generateSync'])->name('marksheets.generate-sync');
+        Route::get('marksheets/batch-progress', [MarksheetController::class, 'batchProgress'])->name('marksheets.batch-progress');
+        Route::get('marksheets/batch-dismiss', [MarksheetController::class, 'batchDismiss'])->name('marksheets.batch-dismiss');
+        Route::get('marksheets/download/{marksheet}', [MarksheetController::class, 'download'])->name('marksheets.download');
+        Route::get('marksheets/download-zip', [MarksheetController::class, 'downloadZip'])->name('marksheets.download-zip');
+        Route::get('marksheets/history', [MarksheetController::class, 'history'])->name('marksheets.history');
+        Route::post('marksheets/bulk-delete', [MarksheetController::class, 'bulkDelete'])->name('marksheets.bulk-delete');
+
+        // OCR
+        Route::get('ocr', [OcrController::class, 'index'])->name('ocr.index');
+        Route::post('ocr/upload', [OcrController::class, 'upload'])->name('ocr.upload');
+        Route::post('ocr/bulk-upload', [OcrController::class, 'bulkUpload'])->name('ocr.bulk-upload');
+        Route::get('ocr/{import}', [OcrController::class, 'show'])->name('ocr.show');
+        Route::post('ocr/{import}/save-marks', [OcrController::class, 'saveMarks'])->name('ocr.save-marks');
+
+        // SMS / WhatsApp
+        Route::get('sms', [SmsController::class, 'index'])->name('sms.index');
+        Route::post('sms/send-bulk', [SmsController::class, 'sendBulk'])->name('sms.send-bulk');
+        Route::post('sms/send-single', [SmsController::class, 'sendSingle'])->name('sms.send-single');
+        Route::get('sms/logs', [SmsController::class, 'logs'])->name('sms.logs');
+
+        // Settings
+        Route::get('settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::post('settings/school', [SettingsController::class, 'updateSchool'])->name('settings.school');
+        Route::post('settings/general', [SettingsController::class, 'updateGeneral'])->name('settings.general');
+        Route::post('settings/grades', [SettingsController::class, 'updateGrades'])->name('settings.grades');
+        Route::get('settings/backup', [SettingsController::class, 'backup'])->name('settings.backup');
+        Route::post('settings/restore', [SettingsController::class, 'restore'])->name('settings.restore');
+
+        // Teacher Management
+        Route::resource('teachers', TeacherController::class)->except(['show']);
+    });
 });
