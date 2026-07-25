@@ -1,2 +1,8 @@
 User-agent: *
-Disallow:
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /admin
+Disallow: /students
+Disallow: /marks-entry
+
+Sitemap: https://resultmaker.alpine-terrapin.ts.net/sitemap.xml

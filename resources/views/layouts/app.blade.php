@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'ResultMaker') – Dynamic Result Management</title>
+    <meta name="robots" content="noindex, nofollow">
+    <title>@yield('title', 'ResultMaker') – School Management</title>
 
     {{-- Google Fonts: Inter, Outfit, JetBrains Mono --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
