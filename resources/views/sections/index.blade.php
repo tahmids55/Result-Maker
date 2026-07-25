@@ -53,6 +53,7 @@
                 <p class="text-sm">No sections yet. <a href="{{ route('sections.create') }}" class="text-blue-600 hover:underline">Add one →</a></p>
             </div>
         @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -83,6 +84,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
             <div class="px-4 py-3 border-t border-gray-200">
                 {{ $sections->links() }}
             </div>

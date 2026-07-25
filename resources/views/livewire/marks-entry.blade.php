@@ -3,14 +3,14 @@
      @marks-hydrate.window="$store.marks.hydrate($event.detail[0] || $event.detail)">
 
     {{-- Selector Row --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
         <h2 class="text-sm font-semibold text-gray-700 mb-4">Select Class / Section / Exam / Subject</h2>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
             {{-- Class --}}
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Class</label>
                 <select wire:model.live="classId" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Select Class --</option>
+                    <option value="">-- Class --</option>
                     @foreach($classes as $class)
                         <option value="{{ $class->id }}">{{ $class->name }}</option>
                     @endforeach
@@ -22,7 +22,7 @@
                 <label class="block text-xs font-medium text-gray-600 mb-1">Section</label>
                 <select wire:model.live="sectionId" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                         {{ empty($classId) ? 'disabled' : '' }}>
-                    <option value="">-- Select Section --</option>
+                    <option value="">-- Section --</option>
                     @foreach($sections as $section)
                         <option value="{{ $section->id }}">{{ $section->name }}</option>
                     @endforeach
@@ -33,7 +33,7 @@
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Exam</label>
                 <select wire:model.live="examId" class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Select Exam --</option>
+                    <option value="">-- Exam --</option>
                     @foreach($exams as $exam)
                         <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
                     @endforeach
@@ -53,9 +53,9 @@
             </div>
 
             {{-- Load Button --}}
-            <div class="flex items-end">
+            <div class="col-span-2 md:col-span-1 flex items-end">
                 <button wire:click="loadMarks" wire:loading.attr="disabled"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 touch-target">
                     <span wire:loading.remove wire:target="loadMarks">📋 Load Marks</span>
                     <span wire:loading wire:target="loadMarks">Loading...</span>
                 </button>
@@ -67,12 +67,12 @@
     @if($loaded)
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
         {{-- Header --}}
-        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 gap-3">
             <div class="text-sm font-semibold text-gray-700">
                 {{ count($students) }} Students ·
                 {{ count($subjects) }} Subjects
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 flex-wrap">
                 {{-- Save Status Indicator --}}
                 <div class="flex items-center gap-2 text-xs">
                     <template x-if="$store.marks.saveState === 'saving'">
@@ -102,33 +102,33 @@
 
                 <button @click="$store.marks.forceSave()"
                         :disabled="$store.marks.dirty.length === 0"
-                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
-                    💾 Save Marks
+                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 touch-target">
+                    💾 Save
                 </button>
                 <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
-                        class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
-                    <span wire:loading.remove wire:target="saveAndCalculateMarks">⚡ Save & Calculate</span>
+                        class="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 touch-target">
+                    <span wire:loading.remove wire:target="saveAndCalculateMarks">⚡ Calculate</span>
                     <span wire:loading wire:target="saveAndCalculateMarks">Processing...</span>
                 </button>
             </div>
         </div>
 
         {{-- Spreadsheet Table --}}
-        <div class="overflow-x-auto scrollbar-thin" x-data="marksGrid()">
+        <div class="overflow-x-auto scrollbar-thin scroll-fade-right" x-data="marksGrid()">
             <table class="w-full text-xs">
                 <thead class="bg-slate-50 sticky top-0 z-10">
                     <tr>
-                        <th class="px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sticky left-0 bg-slate-50 w-8">#</th>
-                        <th class="px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sticky left-8 bg-slate-50 min-w-[60px]">Roll</th>
-                        <th class="px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sticky left-20 bg-slate-50 min-w-[140px]">Name</th>
+                        <th class="px-2 sm:px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sticky left-0 bg-slate-50 w-8">#</th>
+                        <th class="px-2 sm:px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sticky left-8 bg-slate-50 min-w-[50px] sm:min-w-[60px]">Roll</th>
+                        <th class="px-2 sm:px-3 py-2 text-left font-semibold text-gray-600 border-b border-r border-gray-200 sm:sticky left-20 bg-slate-50 min-w-[100px] sm:min-w-[140px] mobile-unstick">Name</th>
                         @foreach($subjects as $subject)
                             @if($subject['has_sub_subjects'])
                                 @foreach($subject['sub_subjects'] as $sub)
                                     @foreach($sub['exam_components'] as $compName => $config)
-                                        <th class="px-2 py-1 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[70px]"
+                                        <th class="px-1.5 sm:px-2 py-1 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[60px] sm:min-w-[70px]"
                                             title="{{ $subject['name'] }} - {{ $sub['name'] }} - {{ strtoupper($compName) }} (Full: {{ $config['full'] }})">
-                                            <div class="text-gray-500 font-normal truncate max-w-[70px]">{{ Str::limit($subject['name'], 8) }}</div>
-                                            <div class="text-indigo-500 font-medium text-[10px] truncate max-w-[70px]">{{ $sub['name'] }}</div>
+                                            <div class="text-gray-500 font-normal truncate max-w-[50px] sm:max-w-[70px]">{{ Str::limit($subject['name'], 6) }}</div>
+                                            <div class="text-indigo-500 font-medium text-[10px] truncate max-w-[50px] sm:max-w-[70px]">{{ $sub['name'] }}</div>
                                             <div class="text-blue-600 uppercase">{{ $compName }}</div>
                                             <div class="text-gray-400 font-normal">/{{ $config['full'] }}</div>
                                         </th>
@@ -136,28 +136,28 @@
                                 @endforeach
                             @else
                                 @foreach($subject['exam_components'] as $compName => $config)
-                                    <th class="px-2 py-1 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[70px]"
+                                    <th class="px-1.5 sm:px-2 py-1 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[60px] sm:min-w-[70px]"
                                         title="{{ $subject['name'] }} - {{ strtoupper($compName) }} (Full: {{ $config['full'] }})">
-                                        <div class="text-gray-500 font-normal truncate max-w-[70px]">{{ Str::limit($subject['name'], 8) }}</div>
+                                        <div class="text-gray-500 font-normal truncate max-w-[50px] sm:max-w-[70px]">{{ Str::limit($subject['name'], 6) }}</div>
                                         <div class="text-blue-600 uppercase">{{ $compName }}</div>
                                         <div class="text-gray-400 font-normal">/{{ $config['full'] }}</div>
                                     </th>
                                 @endforeach
                             @endif
                         @endforeach
-                        <th class="px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[60px] bg-blue-50">Total</th>
-                        <th class="px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[55px] bg-blue-50">%</th>
-                        <th class="px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[50px] bg-blue-50">GPA</th>
-                        <th class="px-3 py-2 text-center font-semibold text-gray-600 border-b border-gray-200 min-w-[50px] bg-blue-50">Grade</th>
+                        <th class="px-2 sm:px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[55px] sm:min-w-[60px] bg-blue-50">Total</th>
+                        <th class="px-2 sm:px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[50px] sm:min-w-[55px] bg-blue-50">%</th>
+                        <th class="px-2 sm:px-3 py-2 text-center font-semibold text-gray-600 border-b border-r border-gray-200 min-w-[45px] sm:min-w-[50px] bg-blue-50">GPA</th>
+                        <th class="px-2 sm:px-3 py-2 text-center font-semibold text-gray-600 border-b border-gray-200 min-w-[45px] sm:min-w-[50px] bg-blue-50">Grade</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($students as $r => $student)
                     @php $sid = $student['id']; @endphp
                     <tr class="hover:bg-gray-50 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50/50' }}">
-                        <td class="px-3 py-1.5 text-gray-400 border-b border-r border-gray-100 sticky left-0 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $r + 1 }}</td>
-                        <td class="px-3 py-1.5 font-mono text-gray-700 border-b border-r border-gray-100 sticky left-8 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $student['roll'] }}</td>
-                        <td class="px-3 py-1.5 font-medium text-gray-800 border-b border-r border-gray-100 sticky left-20 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $student['name'] }}</td>
+                        <td class="px-2 sm:px-3 py-1.5 text-gray-400 border-b border-r border-gray-100 sticky left-0 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $r + 1 }}</td>
+                        <td class="px-2 sm:px-3 py-1.5 font-mono text-gray-700 border-b border-r border-gray-100 sticky left-8 {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $student['roll'] }}</td>
+                        <td class="px-2 sm:px-3 py-1.5 font-medium text-gray-800 border-b border-r border-gray-100 sm:sticky left-20 mobile-unstick {{ ($r % 2 === 0) ? 'bg-white' : 'bg-slate-50' }}">{{ $student['name'] }}</td>
 
                         @php $c = 0; @endphp
                         @foreach($subjects as $subject)
@@ -169,6 +169,7 @@
                                                x-model.lazy="$store.marks.cells[{{ $sid }}][{{ $subject['id'] }}][{{ $sub['id'] }}]['{{ $compName }}']"
                                                @change="$store.marks.setCell({{ $sid }}, {{ $subject['id'] }}, {{ $sub['id'] }}, '{{ $compName }}', $event.target.value)"
                                                min="0" max="{{ $config['full'] }}" step="0.5"
+                                               inputmode="decimal"
                                                data-row="{{ $r }}" data-col="{{ $c }}"
                                                @keydown="handleKey($event)"
                                                class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors bg-transparent"
@@ -188,6 +189,7 @@
                                            x-model.lazy="$store.marks.cells[{{ $sid }}][{{ $subject['id'] }}][0]['{{ $compName }}']"
                                            @change="$store.marks.setCell({{ $sid }}, {{ $subject['id'] }}, 0, '{{ $compName }}', $event.target.value)"
                                            min="0" max="{{ $config['full'] }}" step="0.5"
+                                           inputmode="decimal"
                                            data-row="{{ $r }}" data-col="{{ $c }}"
                                            @keydown="handleKey($event)"
                                            class="mark-input w-full px-2 py-1.5 text-center text-xs focus:outline-none focus:ring-1 focus:ring-blue-400 rounded transition-colors bg-transparent"
@@ -221,20 +223,20 @@
         </div>
 
         {{-- Footer Save --}}
-        <div class="px-5 py-4 border-t border-gray-200 flex justify-between items-center">
+        <div class="px-4 sm:px-5 py-3 sm:py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <p class="text-xs text-gray-500">
-                💡 Marks are color-coded: <span class="text-orange-600">orange = below pass mark</span>,
-                <span class="text-red-600">red = exceeds full marks</span>.
-                Auto-saves 2s after last edit.
+                💡 <span class="text-orange-600">Orange = below pass</span>,
+                <span class="text-red-600">Red = exceeds full</span>.
+                Auto-saves 2s after edit.
             </p>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto">
                 <button @click="$store.marks.forceSave()"
                         :disabled="$store.marks.dirty.length === 0"
-                        class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
+                        class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 touch-target">
                     💾 Save Marks
                 </button>
                 <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
-                        class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50">
+                        class="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 touch-target">
                     <span wire:loading.remove wire:target="saveAndCalculateMarks">⚡ Save & Calculate</span>
                     <span wire:loading wire:target="saveAndCalculateMarks">Processing...</span>
                 </button>
@@ -243,12 +245,12 @@
     </div>
 
     @elseif($classId && $sectionId && $examId)
-    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 shadow-sm">
+    <div class="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center text-gray-400 shadow-sm">
         <p class="text-4xl mb-3">📋</p>
         <p class="text-sm">Click <strong>Load Marks</strong> to display the spreadsheet.</p>
     </div>
     @else
-    <div class="bg-white rounded-xl border border-gray-200 p-12 text-center text-gray-400 shadow-sm">
+    <div class="bg-white rounded-xl border border-gray-200 p-8 sm:p-12 text-center text-gray-400 shadow-sm">
         <p class="text-4xl mb-3">✏️</p>
         <p class="text-sm">Select a class, section, and exam above to begin entering marks.</p>
     </div>

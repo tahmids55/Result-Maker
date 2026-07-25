@@ -9,7 +9,7 @@
         <form method="POST" action="{{ route('students.update', $student) }}" enctype="multipart/form-data" class="space-y-4">
             @csrf @method('PUT')
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <input type="text" name="name" value="{{ old('name', $student->name) }}" required

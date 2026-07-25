@@ -1,3 +1,77 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================
+   MOBILE RESPONSIVE UTILITIES
+   ============================================================ */
+
+/* Prevent iOS auto-zoom on input focus (requires ≥16px) */
+@media (max-width: 640px) {
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="search"],
+    input[type="url"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Touch-friendly mark inputs on mobile */
+@media (max-width: 640px) {
+    .mark-input {
+        min-height: 44px;
+        font-size: 14px !important;
+        padding: 8px 4px;
+    }
+}
+
+/* Hide number input spinners on mobile for cleaner tap targets */
+@media (max-width: 640px) {
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type="number"] {
+        -moz-appearance: textfield;
+    }
+}
+
+/* Scroll fade indicator — append to scrollable table wrappers */
+.scroll-fade-right {
+    position: relative;
+}
+.scroll-fade-right::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    background: linear-gradient(to right, transparent, white);
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Un-stick the Name column on phones so more data columns are visible */
+@media (max-width: 640px) {
+    .mobile-unstick {
+        position: relative !important;
+        left: auto !important;
+    }
+}
+
+/* Ensure minimum touch target height for action buttons on mobile */
+@media (max-width: 640px) {
+    .touch-target {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

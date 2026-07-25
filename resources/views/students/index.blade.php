@@ -120,9 +120,9 @@
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">Roll</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
                             <th class="px-4 py-3 text-left font-semibold text-gray-600">Class / Section</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-600">Father</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-600">Session</th>
-                            <th class="px-4 py-3 text-left font-semibold text-gray-600">Reg. No.</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden md:table-cell">Father</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden md:table-cell">Session</th>
+                            <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden lg:table-cell">Reg. No.</th>
                             <th class="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                         </tr>
                     </thead>
@@ -144,9 +144,9 @@
                             <td class="px-4 py-3 text-gray-600">
                                 {{ $student->schoolClass->name }} / {{ $student->section->name }}
                             </td>
-                            <td class="px-4 py-3 text-gray-500">{{ $student->father_name ?? '–' }}</td>
-                            <td class="px-4 py-3 text-gray-500">{{ $student->session ?? '–' }}</td>
-                            <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ $student->registration_no ?? '–' }}</td>
+                            <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ $student->father_name ?? '–' }}</td>
+                            <td class="px-4 py-3 text-gray-500 hidden md:table-cell">{{ $student->session ?? '–' }}</td>
+                            <td class="px-4 py-3 text-gray-500 font-mono text-xs hidden lg:table-cell">{{ $student->registration_no ?? '–' }}</td>
                             <td class="px-4 py-3 text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <button type="button" @click='openViewModal({{ json_encode([

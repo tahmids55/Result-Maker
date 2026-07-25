@@ -9,7 +9,7 @@
         <form method="POST" action="{{ route('subjects.store') }}" x-data="subjectForm()" class="space-y-5">
             @csrf
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Subject Name *</label>
                     <input type="text" name="name" value="{{ old('name') }}" required placeholder="e.g. Mathematics"

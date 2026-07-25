@@ -36,6 +36,7 @@
                 <p class="text-sm">No classes yet. <a href="{{ route('classes.create') }}" class="text-blue-600 hover:underline">Add one →</a></p>
             </div>
         @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -68,6 +69,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
             <div class="px-4 py-3 border-t border-gray-200">
                 {{ $classes->links() }}
             </div>

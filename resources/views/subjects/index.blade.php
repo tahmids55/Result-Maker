@@ -42,13 +42,14 @@
                 <p class="text-sm">No subjects yet. <a href="{{ route('subjects.create') }}" class="text-blue-600 hover:underline">Add one →</a></p>
             </div>
         @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Subject</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Class / Section</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Components</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Total Marks</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden sm:table-cell">Components</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden sm:table-cell">Total Marks</th>
                         <th class="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                     </tr>
                 </thead>
@@ -61,7 +62,7 @@
                             @if($subject->is_optional)<span class="text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">Optional</span>@endif
                         </td>
                         <td class="px-4 py-3 text-gray-600">{{ $subject->schoolClass->name }} / {{ $subject->section->name }}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 hidden sm:table-cell">
                             <div class="flex flex-wrap gap-1">
                                 @if($subject->has_sub_subjects)
                                     <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
@@ -76,7 +77,7 @@
                                 @endif
                             </div>
                         </td>
-                        <td class="px-4 py-3 font-semibold text-gray-800">
+                        <td class="px-4 py-3 font-semibold text-gray-800 hidden sm:table-cell">
                             {{ $subject->total_full_marks }}
                             <span class="text-xs text-gray-400 font-normal">(pass: {{ $subject->total_pass_marks }})</span>
                         </td>
@@ -99,6 +100,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
             <div class="px-4 py-3 border-t border-gray-200">
                 {{ $subjects->links() }}
             </div>

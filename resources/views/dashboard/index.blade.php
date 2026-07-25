@@ -103,7 +103,7 @@
 
     {{-- Active Exam Banner --}}
     @if($stats['active_exam'])
-    <div class="bg-blue-600 text-white rounded-xl p-5 flex items-center justify-between shadow">
+    <div class="bg-blue-600 text-white rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow">
         <div>
             <div class="font-semibold">Active Exam: {{ $stats['active_exam']->name }} {{ $stats['active_exam']->year }}</div>
             @if($stats['active_exam']->end_date)
@@ -174,11 +174,11 @@
                                             if ($stats['active_exam']) $queryParams['examId'] = $stats['active_exam']->id;
                                         @endphp
                                         <a href="{{ route('marks.index', $queryParams) }}" 
-                                           class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center text-xs font-medium py-2 rounded-lg transition-colors">
+                                           class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center text-xs font-medium py-2.5 rounded-lg transition-colors touch-target">
                                             Enter Marks
                                         </a>
                                         <a href="{{ route('results.index') }}" 
-                                           class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-center text-xs font-medium py-2 rounded-lg transition-colors">
+                                           class="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 text-center text-xs font-medium py-2.5 rounded-lg transition-colors touch-target">
                                             Preview Result
                                         </a>
                                     </div>

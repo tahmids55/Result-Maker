@@ -4,7 +4,7 @@
 @section('content')
 <div class="py-4 space-y-4">
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center justify-between">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-lg font-bold text-gray-900">OCR Review</h2>
             <p class="text-sm text-gray-500">Image: {{ basename($import->image_path) }} · Status:
@@ -48,7 +48,7 @@
 
         <form method="POST" action="{{ route('ocr.save-marks', $import) }}" class="space-y-4">
             @csrf
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Exam</label>
                     <select name="exam_id" required

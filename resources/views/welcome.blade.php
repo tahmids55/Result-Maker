@@ -58,7 +58,11 @@
         }
     </script>
     
+    <!-- Alpine.js for mobile menu -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <style>
+        [x-cloak] { display: none !important; }
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -84,7 +88,7 @@
 <body class="antialiased text-slate-300 mesh-bg min-h-screen selection:bg-indigo-500/30 selection:text-indigo-200">
     
     <!-- Navigation -->
-    <nav class="fixed w-full z-50 transition-all duration-300 glass-panel border-b-0 border-white/5 bg-slate-950/40">
+    <nav class="fixed w-full z-50 transition-all duration-300 glass-panel border-b-0 border-white/5 bg-slate-950/40" x-data="{ mobileOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center gap-3 group cursor-pointer">
@@ -104,6 +108,37 @@
                         @else
                             <a href="{{ route('login') }}" class="text-slate-300 hover:text-white transition-colors">Log in</a>
                             <a href="{{ route('register') }}" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                                Get Started
+                            </a>
+                        @endauth
+                    </div>
+                </div>
+
+                <!-- Mobile hamburger button -->
+                <button @click="mobileOpen = !mobileOpen" class="md:hidden text-slate-300 hover:text-white transition-colors p-2">
+                    <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <svg x-show="mobileOpen" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Mobile menu -->
+            <div x-show="mobileOpen" x-cloak
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 -translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 -translate-y-2"
+                 class="md:hidden pb-4 pt-2 border-t border-white/10 mt-2">
+                <div class="flex flex-col space-y-2">
+                    <a href="#features" @click="mobileOpen = false" class="text-slate-300 hover:text-white transition-colors px-2 py-2 rounded-lg hover:bg-white/5 text-sm">Features</a>
+                    <a href="#how-it-works" @click="mobileOpen = false" class="text-slate-300 hover:text-white transition-colors px-2 py-2 rounded-lg hover:bg-white/5 text-sm">How it Works</a>
+                    <div class="border-t border-white/10 pt-2 mt-2 flex flex-col space-y-2">
+                        @auth
+                            <a href="{{ route('dashboard') }}" class="text-white hover:text-indigo-300 transition-colors px-2 py-2 text-sm">Dashboard</a>
+                        @else
+                            <a href="{{ route('login') }}" class="text-slate-300 hover:text-white transition-colors px-2 py-2 text-sm">Log in</a>
+                            <a href="{{ route('register') }}" class="text-center px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 transition-all duration-300 text-sm font-medium">
                                 Get Started
                             </a>
                         @endauth
@@ -150,7 +185,7 @@
             </div>
             
             <!-- Dashboard Preview Image -->
-            <div class="mt-20 relative max-w-5xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s;">
+            <div class="mt-12 sm:mt-20 relative max-w-5xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s;">
                 <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl blur opacity-20"></div>
                 <div class="relative rounded-2xl glass-panel p-2 ring-1 ring-white/10 shadow-2xl">
                     <div class="rounded-xl overflow-hidden bg-slate-900 aspect-video flex items-center justify-center border border-white/5 relative">

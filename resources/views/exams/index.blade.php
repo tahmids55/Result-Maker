@@ -36,12 +36,13 @@
                 <p class="text-sm">No exams yet. <a href="{{ route('exams.create') }}" class="text-blue-600 hover:underline">Create one →</a></p>
             </div>
         @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Exam</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Year</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Period</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden sm:table-cell">Period</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Status</th>
                         <th class="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                     </tr>
@@ -51,7 +52,7 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 font-medium text-gray-900">{{ $exam->name }}</td>
                         <td class="px-4 py-3 text-gray-600">{{ $exam->year }}</td>
-                        <td class="px-4 py-3 text-gray-500 text-xs">
+                        <td class="px-4 py-3 text-gray-500 text-xs hidden sm:table-cell">
                             @if($exam->start_date)
                                 {{ $exam->start_date->format('d M Y') }} – {{ $exam->end_date?->format('d M Y') ?? '...' }}
                             @else
@@ -85,6 +86,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
             <div class="px-4 py-3 border-t border-gray-200">
                 {{ $exams->links() }}
             </div>

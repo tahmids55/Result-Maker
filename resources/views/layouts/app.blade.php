@@ -125,7 +125,7 @@
             {{-- Breadcrumbs --}}
             @if(!request()->routeIs('dashboard'))
                 <nav class="flex text-xs text-gray-500 mb-4 print:hidden" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <ol class="inline-flex flex-wrap items-center space-x-1 md:space-x-3">
                         <li class="inline-flex items-center">
                             <a href="{{ route('dashboard') }}" class="inline-flex items-center hover:text-blue-600 transition-colors">
                                 🏠 Home
@@ -154,7 +154,7 @@
 </div>
 
 {{-- Toast Notifications --}}
-<div class="fixed top-4 right-4 z-50 space-y-2 print:hidden" style="max-width: 380px;">
+<div class="fixed top-4 right-2 sm:right-4 z-50 space-y-2 print:hidden" style="max-width: min(380px, calc(100vw - 1rem));">
     @if(session('success'))
         <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
              x-transition:enter="toast-enter" x-transition:leave="toast-leave"

@@ -5,11 +5,11 @@
 <div class="py-4 space-y-6" x-data="{ tab: 'school' }">
 
     {{-- Tabs --}}
-    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+    <div class="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto scrollbar-thin">
         @foreach([['school','🏫 School Info'],['grades','📊 Grading System'],['backup','💾 Backup'],['general','⚙️ General Settings']] as [$key, $label])
         <button @click="tab='{{ $key }}'"
                 :class="tab==='{{ $key }}' ? 'bg-white shadow text-gray-900' : 'text-gray-600 hover:text-gray-900'"
-                class="px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                class="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap">
             {{ $label }}
         </button>
         @endforeach
@@ -21,7 +21,7 @@
             <h2 class="text-base font-semibold text-gray-800 mb-5">School Information</h2>
             <form method="POST" action="{{ route('settings.school') }}" enctype="multipart/form-data" class="space-y-4">
                 @csrf
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">School Name *</label>
                         <input type="text" name="name" value="{{ old('name', $school?->name) }}" required
@@ -80,7 +80,7 @@
                     </div>
                 </div>
 
-                <div class="border-t border-gray-100 pt-5 mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="border-t border-gray-100 pt-5 mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">SMS API Key</label>
                         <input type="text" name="sms_api_key" value="{{ old('sms_api_key', $school?->sms_api_key) }}"
@@ -116,7 +116,7 @@
             </div>
             <form method="POST" action="{{ route('settings.grades') }}" class="space-y-3">
                 @csrf
-                <div class="overflow-hidden rounded-lg border border-gray-200">
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 border-b border-gray-200">
                             <tr>

@@ -18,12 +18,13 @@
                 <p class="text-sm">No teachers yet. <a href="{{ route('teachers.create') }}" class="text-blue-600 hover:underline">Add one →</a></p>
             </div>
         @else
+        <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Username</th>
-                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Assigned Subjects</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600 hidden sm:table-cell">Assigned Subjects</th>
                         <th class="px-4 py-3 text-right font-semibold text-gray-600">Actions</th>
                     </tr>
                 </thead>
@@ -34,7 +35,7 @@
                         <td class="px-4 py-3 text-gray-600">
                             <code class="bg-gray-100 px-2 py-0.5 rounded text-xs">{{ $teacher->username }}</code>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3 hidden sm:table-cell">
                             <div class="flex flex-wrap gap-1">
                                 @forelse($teacher->assignedSubjects as $subject)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
@@ -61,6 +62,7 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
             <div class="px-4 py-3 border-t border-gray-200">
                 {{ $teachers->links() }}
             </div>

@@ -52,7 +52,7 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2 pt-3 border-t border-gray-100">
+                <div class="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
                     <a href="{{ route('templates.map', $template) }}"
                        class="flex-1 text-center text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-1.5 rounded-lg transition-colors">
                         Map Fields

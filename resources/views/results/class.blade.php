@@ -5,7 +5,7 @@
 <div class="py-4 space-y-4">
 
     {{-- Header --}}
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center justify-between">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-lg font-bold text-gray-900">{{ $class->name }} – Section {{ $section->name }}</h2>
             <p class="text-sm text-gray-500">{{ $exam->name }} {{ $exam->year }}</p>

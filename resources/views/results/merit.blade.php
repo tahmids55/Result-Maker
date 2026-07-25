@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="py-4 space-y-4">
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center justify-between">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-lg font-bold text-gray-900">Merit List</h2>
             <p class="text-sm text-gray-500">{{ $class->name }} – Section {{ $section->name }} · {{ $exam->name }} {{ $exam->year }}</p>
@@ -15,6 +15,7 @@
         @if($results->isEmpty())
             <div class="py-12 text-center text-gray-400 text-sm">No results available. Enter marks and recalculate.</div>
         @else
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -57,6 +58,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         @endif
     </div>
 </div>
