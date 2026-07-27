@@ -53,7 +53,9 @@ class SubjectController extends Controller
             'sub_subjects.*.components' => 'required_with:sub_subjects|array|min:1',
             'is_optional'       => 'boolean',
             'has_sub_subjects'  => 'boolean',
-            'accumulated_pass_marks' => 'boolean',
+            'full_marks'        => 'required|numeric|min:1',
+            'pass_marks'        => 'required|numeric|min:0',
+            'is_individual_pass'=> 'boolean',
             'sort_order'        => 'nullable|integer',
         ]);
 
@@ -78,7 +80,9 @@ class SubjectController extends Controller
             'has_sub_subjects'=> $hasSubSubjects,
             'exam_components' => $hasSubSubjects ? [] : $components,
             'is_optional'     => $request->boolean('is_optional'),
-            'accumulated_pass_marks' => $request->boolean('accumulated_pass_marks'),
+            'full_marks'      => $request->full_marks,
+            'pass_marks'      => $request->pass_marks,
+            'is_individual_pass' => $request->boolean('is_individual_pass'),
             'sort_order'      => $request->sort_order ?? 0,
         ]);
 
@@ -127,7 +131,9 @@ class SubjectController extends Controller
             'sub_subjects.*.name' => 'required_with:sub_subjects|string|max:100',
             'sub_subjects.*.components' => 'required_with:sub_subjects|array|min:1',
             'is_optional'       => 'boolean',
-            'accumulated_pass_marks' => 'boolean',
+            'full_marks'        => 'required|numeric|min:1',
+            'pass_marks'        => 'required|numeric|min:0',
+            'is_individual_pass'=> 'boolean',
         ]);
 
         $hasSubSubjects = $request->boolean('has_sub_subjects');
@@ -148,7 +154,9 @@ class SubjectController extends Controller
             'has_sub_subjects'=> $hasSubSubjects,
             'exam_components' => $hasSubSubjects ? [] : $components,
             'is_optional'     => $request->boolean('is_optional'),
-            'accumulated_pass_marks' => $request->boolean('accumulated_pass_marks'),
+            'full_marks'      => $request->full_marks,
+            'pass_marks'      => $request->pass_marks,
+            'is_individual_pass' => $request->boolean('is_individual_pass'),
             'sort_order'      => $request->sort_order ?? 0,
         ]);
 

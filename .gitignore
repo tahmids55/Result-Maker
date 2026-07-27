@@ -64,3 +64,6 @@ venv
 2.docx
 out.docx
 public/robots.txt
+context
+fix_duplicates.php
+test_upsert.php

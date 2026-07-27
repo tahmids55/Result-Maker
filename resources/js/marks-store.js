@@ -87,11 +87,9 @@ document.addEventListener('alpine:init', () => {
                     for (const sub of (subj.sub_subjects || [])) {
                         for (const [compName, config] of Object.entries(sub.exam_components || {})) {
                             const val = parseFloat(this.getCell(sid, subj.id, sub.id, compName)) || 0;
-                            const full = parseFloat(config.full) || 0;
                             const pass = parseFloat(config.pass) || 0;
 
                             subjObt += val;
-                            subjFull += full;
 
                             if (!aggComps[compName]) aggComps[compName] = { obtained: 0, pass: 0 };
                             aggComps[compName].obtained += val;
@@ -105,25 +103,32 @@ document.addEventListener('alpine:init', () => {
                 } else {
                     for (const [compName, config] of Object.entries(subj.exam_components || {})) {
                         const val = parseFloat(this.getCell(sid, subj.id, 0, compName)) || 0;
-                        const full = parseFloat(config.full) || 0;
                         const pass = parseFloat(config.pass) || 0;
 
                         subjObt += val;
-                        subjFull += full;
 
                         if (val < pass) compFailed = true;
                     }
                 }
 
+                subjFull = parseFloat(subj.full_marks) || 100;
+                let subjectPassed = true;
+                
+                if (subj.is_individual_pass) {
+                    if (compFailed || subjObt < parseFloat(subj.pass_marks || 0)) subjectPassed = false;
+                } else {
+                    if (subjObt < parseFloat(subj.pass_marks || 0)) subjectPassed = false;
+                }
+
                 const pct = subjFull > 0 ? (subjObt / subjFull) * 100 : 0;
-                let gradeInfo = compFailed ? { grade: 'F', gpa: 0 } : this._lookupGrade(pct);
+                let gradeInfo = !subjectPassed ? { grade: 'F', gpa: 0 } : this._lookupGrade(pct);
 
                 if (subj.is_optional) {
                     const bonus = Math.max(0, gradeInfo.gpa - 2.0);
                     totalGpa += bonus;
                     totalObt += Math.max(0, subjObt - 40);
                 } else {
-                    if (compFailed) {
+                    if (!subjectPassed) {
                         failed = true;
                         gradeInfo = { grade: 'F', gpa: 0 };
                     }

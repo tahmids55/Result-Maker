@@ -20,26 +20,26 @@ class MarkRepository
             return 0;
         }
 
-        $records = array_map(fn(MarkEntryDTO $d) => [
-            'student_id'     => $d->studentId,
-            'subject_id'     => $d->subjectId,
-            'sub_subject_id' => $d->subSubjectId,
-            'exam_id'        => $d->examId,
-            'component'      => $d->component,
-            'obtained_marks' => $d->obtained,
-            'full_marks'     => $d->full,
-            'pass_marks'     => $d->pass,
-            'user_id'        => auth()->user()->owner_id,
-            'updated_at'     => now(),
-            'created_at'     => now(),
-        ], $dtos);
+        $saved = 0;
+        foreach ($dtos as $d) {
+            Mark::updateOrCreate(
+                [
+                    'student_id'     => $d->studentId,
+                    'subject_id'     => $d->subjectId,
+                    'sub_subject_id' => $d->subSubjectId,
+                    'exam_id'        => $d->examId,
+                    'component'      => $d->component,
+                ],
+                [
+                    'obtained_marks' => $d->obtained,
+                    'full_marks'     => $d->full,
+                    'pass_marks'     => $d->pass,
+                    'user_id'        => auth()->check() ? auth()->user()->owner_id : null,
+                ]
+            );
+            $saved++;
+        }
 
-        return Mark::upsert(
-            $records,
-            // Unique constraint columns
-            ['student_id', 'subject_id', 'sub_subject_id', 'exam_id', 'component'],
-            // Columns to update on conflict
-            ['obtained_marks', 'full_marks', 'pass_marks', 'updated_at']
-        );
+        return $saved;
     }
 }

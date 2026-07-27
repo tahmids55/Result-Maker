@@ -59,13 +59,27 @@
                     </div>
                 </label>
 
-                <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-                    <input type="checkbox" name="accumulated_pass_marks" value="1" {{ old('accumulated_pass_marks') ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <div>
-                        <span class="font-bold">Use Accumulated Pass Marks</span>
-                        <p class="text-xs text-gray-500 mt-0.5">If checked, a student passes the subject if their total obtained marks ≥ total pass marks, regardless of failing individual components.</p>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject Full Marks *</label>
+                        <input type="number" name="full_marks" value="{{ old('full_marks', 100) }}" required min="1" step="0.01"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
-                </label>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject Pass Marks *</label>
+                        <input type="number" name="pass_marks" value="{{ old('pass_marks', 33) }}" required min="0" step="0.01"
+                               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="col-span-1 sm:col-span-2 mt-2">
+                        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                            <input type="checkbox" name="is_individual_pass" value="1" {{ old('is_individual_pass') ? 'checked' : '' }} class="rounded text-blue-600 focus:ring-blue-500">
+                            <div>
+                                <span class="font-bold">Individual Component Passmark Calculation</span>
+                                <p class="text-xs text-gray-500 mt-0.5">If checked, a student passes ONLY IF they pass ALL individual components AND their total obtained marks ≥ the subject pass marks.</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
             </div>
 
             {{-- Dynamic Components (No Sub-Subjects) --}}

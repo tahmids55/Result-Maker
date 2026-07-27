@@ -15,14 +15,17 @@ class Subject extends Model
 
     protected $fillable = [
         'name', 'code', 'class_id', 'section_id',
-        'exam_components', 'is_optional', 'sort_order', 'has_sub_subjects', 'accumulated_pass_marks',
+        'exam_components', 'is_optional', 'sort_order', 'has_sub_subjects', 
+        'full_marks', 'pass_marks', 'is_individual_pass',
     ];
 
     protected $casts = [
         'exam_components' => 'array',
         'is_optional'     => 'boolean',
         'has_sub_subjects' => 'boolean',
-        'accumulated_pass_marks' => 'boolean',
+        'is_individual_pass' => 'boolean',
+        'full_marks'      => 'float',
+        'pass_marks'      => 'float',
     ];
 
     public function schoolClass(): BelongsTo
@@ -58,12 +61,7 @@ class Subject extends Model
      */
     public function getTotalFullMarksAttribute(): float
     {
-        if ($this->has_sub_subjects) {
-            return $this->subSubjects->sum(function($sub) {
-                return collect($sub->exam_components)->sum(fn($c) => $c['full'] ?? 0);
-            });
-        }
-        return collect($this->exam_components)->sum(fn($c) => $c['full'] ?? 0);
+        return (float) $this->full_marks;
     }
 
     /**
@@ -71,12 +69,7 @@ class Subject extends Model
      */
     public function getTotalPassMarksAttribute(): float
     {
-        if ($this->has_sub_subjects) {
-            return $this->subSubjects->sum(function($sub) {
-                return collect($sub->exam_components)->sum(fn($c) => $c['pass'] ?? 0);
-            });
-        }
-        return collect($this->exam_components)->sum(fn($c) => $c['pass'] ?? 0);
+        return (float) $this->pass_marks;
     }
 
     /**

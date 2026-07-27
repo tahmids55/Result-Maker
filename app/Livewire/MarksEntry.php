@@ -36,12 +36,7 @@ class MarksEntry extends Component
     public bool  $autoSaveEnabled = false;
     public array $errors_   = [];
 
-    // Computed (reactive)
-    public array $rowTotals        = [];  // [student_id] => total
-    public array $rowPercentages   = [];  // [student_id] => pct
-    public array $rowGpas          = [];  // [student_id] => gpa
-    public array $rowGrades        = [];  // [student_id] => grade
-    public array $rowPassed        = [];  // [student_id] => bool
+    // Computed (reactive) - Handled entirely client-side by AlpineJS now
 
     public function mount(): void
     {
@@ -143,6 +138,9 @@ class MarksEntry extends Component
                 'code'             => $s->code,
                 'has_sub_subjects' => $s->has_sub_subjects,
                 'is_optional'      => $s->is_optional ?? false,
+                'full_marks'       => $s->full_marks,
+                'pass_marks'       => $s->pass_marks,
+                'is_individual_pass' => $s->is_individual_pass,
                 'exam_components'  => $s->exam_components,
                 'sub_subjects'     => $s->subSubjects->map(function($sub) {
                     return [
@@ -156,8 +154,6 @@ class MarksEntry extends Component
         $this->marks  = $marks;
         $this->loaded = true;
 
-        $this->recalculateAll();
-
         // Dispatch hydration event for the Alpine.js client state engine
         $this->dispatch('marks-hydrate', [
             'marks'    => $marks,
@@ -168,101 +164,7 @@ class MarksEntry extends Component
         ]);
     }
 
-    public function updatedMarks(): void
-    {
-        $this->recalculateAll();
-    }
 
-    public function saveMarks(bool $silent = false): void
-    {
-        if (!$this->loaded) return;
-
-        $this->saving   = true;
-        $this->errors_  = [];
-
-        $saved = 0;
-        foreach ($this->students as $student) {
-            foreach ($this->subjects as $subject) {
-                if ($subject['has_sub_subjects']) {
-                    foreach ($subject['sub_subjects'] as $sub) {
-                        foreach ($sub['exam_components'] as $componentName => $config) {
-                            $obtained = $this->marks[$student['id']][$subject['id']][$sub['id']][$componentName] ?? null;
-                            if ($obtained === null || $obtained === '') continue;
-
-                            $obtained = (float) $obtained;
-                            $full     = (float) ($config['full'] ?? 0);
-
-                            if ($obtained > $full) {
-                                $this->errors_[] = "Student {$student['name']}: {$sub['name']} {$componentName} exceeds max ({$full}).";
-                                continue;
-                            }
-
-                            Mark::updateOrCreate(
-                                [
-                                    'student_id'     => $student['id'],
-                                    'subject_id'     => $subject['id'],
-                                    'sub_subject_id' => $sub['id'],
-                                    'exam_id'        => $this->examId,
-                                    'component'      => $componentName,
-                                ],
-                                [
-                                    'obtained_marks' => $obtained,
-                                    'full_marks'     => $full,
-                                    'pass_marks'     => (float) ($config['pass'] ?? 0),
-                                ]
-                            );
-                            $saved++;
-                        }
-                    }
-                } else {
-                    foreach ($subject['exam_components'] as $componentName => $config) {
-                        $obtained = $this->marks[$student['id']][$subject['id']][0][$componentName] ?? null;
-                        if ($obtained === null || $obtained === '') continue;
-
-                        $obtained = (float) $obtained;
-                        $full     = (float) ($config['full'] ?? 0);
-
-                        if ($obtained > $full) {
-                            $this->errors_[] = "Student {$student['name']}: {$subject['name']} {$componentName} exceeds max ({$full}).";
-                            continue;
-                        }
-
-                        Mark::updateOrCreate(
-                            [
-                                'student_id'     => $student['id'],
-                                'subject_id'     => $subject['id'],
-                                'sub_subject_id' => null,
-                                'exam_id'        => $this->examId,
-                                'component'      => $componentName,
-                            ],
-                            [
-                                'obtained_marks' => $obtained,
-                                'full_marks'     => $full,
-                                'pass_marks'     => (float) ($config['pass'] ?? 0),
-                            ]
-                        );
-                        $saved++;
-                    }
-                }
-            }
-        }
-
-        $this->saving = false;
-
-        if (!$silent) {
-            if (empty($this->errors_)) {
-                session()->flash('success', "{$saved} marks saved successfully.");
-            } else {
-                session()->flash('warning', count($this->errors_) . ' validation issues found. Valid marks were saved.');
-            }
-        }
-    }
-
-    public function saveMarksSilent(): void
-    {
-        if (!$this->autoSaveEnabled) return;
-        $this->saveMarks(true);
-    }
 
     /**
      * Batch save endpoint for the Alpine.js client-side state engine.
@@ -332,122 +234,7 @@ class MarksEntry extends Component
         return null;
     }
 
-    public function saveAndCalculateMarks(ResultCalculationService $service): void
-    {
-        $this->saveMarks();
 
-        if (!$this->loaded || $this->examId === null || empty($this->students)) {
-            return;
-        }
-
-        $exam = Exam::find($this->examId);
-        if (!$exam) return;
-
-        $calculatedCount = 0;
-        
-        $preloadedMarks = Mark::where('exam_id', $exam->id)
-            ->whereIn('student_id', array_column($this->students, 'id'))
-            ->get()
-            ->groupBy(function ($m) {
-                return $m->subject_id . '_' . ($m->sub_subject_id ?? 0) . '_' . $m->component;
-            });
-
-        foreach ($this->students as $studentData) {
-            $student = Student::find($studentData['id']);
-            if ($student) {
-                $studentMarks = $preloadedMarks->filter(function($marks, $key) use ($student) {
-                     return $marks->first()->student_id == $student->id;
-                });
-                
-                $service->calculateForStudent($student, $exam, $studentMarks);
-                $calculatedCount++;
-            }
-        }
-        
-        $service->updateRanksForExam($exam);
-
-        session()->flash('success', "Marks saved and results calculated for {$calculatedCount} students.");
-    }
-
-    private function recalculateAll(): void
-    {
-        $gradeMap = $this->getGradeMap();
-
-        foreach ($this->students as $student) {
-            $sid       = $student['id'];
-            $total     = 0;
-            $fullTotal = 0;
-            $allPassed = true;
-
-            foreach ($this->subjects as $subject) {
-                if ($subject['has_sub_subjects']) {
-                    $aggregatedComponents = [];
-
-                    foreach ($subject['sub_subjects'] as $sub) {
-                        foreach ($sub['exam_components'] as $componentName => $config) {
-                            $obtained  = (float) ($this->marks[$sid][$subject['id']][$sub['id']][$componentName] ?? 0);
-                            $pass      = (float) ($config['pass'] ?? 0);
-                            $full      = (float) ($config['full'] ?? 0);
-
-                            $total     += $obtained;
-                            $fullTotal += $full;
-
-                            if (!isset($aggregatedComponents[$componentName])) {
-                                $aggregatedComponents[$componentName] = ['obtained' => 0, 'pass' => 0];
-                            }
-                            $aggregatedComponents[$componentName]['obtained'] += $obtained;
-                            $aggregatedComponents[$componentName]['pass'] += $pass;
-                        }
-                    }
-
-                    foreach ($aggregatedComponents as $compName => $data) {
-                        if ($data['obtained'] < $data['pass']) {
-                            $allPassed = false;
-                        }
-                    }
-                } else {
-                    foreach ($subject['exam_components'] as $componentName => $config) {
-                        $obtained  = (float) ($this->marks[$sid][$subject['id']][0][$componentName] ?? 0);
-                        $pass      = (float) ($config['pass'] ?? 0);
-                        $full      = (float) ($config['full'] ?? 0);
-
-                        $total     += $obtained;
-                        $fullTotal += $full;
-
-                        if ($obtained < $pass) {
-                            $allPassed = false;
-                        }
-                    }
-                }
-            }
-
-            $pct = $fullTotal > 0 ? round(($total / $fullTotal) * 100, 2) : 0;
-            $isPassed = $allPassed && $pct >= 33;
-            
-            if (!$isPassed) {
-                $grade = 'F';
-                $gpa = 0.00;
-            } else {
-                [$grade, $gpa] = $this->resolveGrade($pct, $gradeMap);
-            }
-
-            $this->rowTotals[$sid]      = $total;
-            $this->rowPercentages[$sid] = $pct;
-            $this->rowGpas[$sid]        = $gpa;
-            $this->rowGrades[$sid]      = $grade;
-            $this->rowPassed[$sid]      = $isPassed;
-        }
-    }
-
-    private function resolveGrade(float $pct, array $gradeMap): array
-    {
-        foreach ($gradeMap as $config) {
-            if ($pct >= $config['min'] && $pct <= $config['max']) {
-                return [$config['grade'], $config['gpa']];
-            }
-        }
-        return ['F', 0.00];
-    }
 
     private function getGradeMap(): array
     {

@@ -103,12 +103,8 @@
                 <button @click="$store.marks.forceSave()"
                         :disabled="$store.marks.dirty.length === 0"
                         class="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 touch-target">
-                    💾 Save
-                </button>
-                <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
-                        class="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 touch-target">
-                    <span wire:loading.remove wire:target="saveAndCalculateMarks">⚡ Calculate</span>
-                    <span wire:loading wire:target="saveAndCalculateMarks">Processing...</span>
+                    <span x-show="$store.marks.saveState !== 'saving'">💾 Save</span>
+                    <span x-show="$store.marks.saveState === 'saving'">Saving...</span>
                 </button>
             </div>
         </div>
@@ -233,12 +229,8 @@
                 <button @click="$store.marks.forceSave()"
                         :disabled="$store.marks.dirty.length === 0"
                         class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 touch-target">
-                    💾 Save Marks
-                </button>
-                <button wire:click="saveAndCalculateMarks" wire:loading.attr="disabled"
-                        class="flex-1 sm:flex-none bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 touch-target">
-                    <span wire:loading.remove wire:target="saveAndCalculateMarks">⚡ Save & Calculate</span>
-                    <span wire:loading wire:target="saveAndCalculateMarks">Processing...</span>
+                    <span x-show="$store.marks.saveState !== 'saving'">💾 Save Marks</span>
+                    <span x-show="$store.marks.saveState === 'saving'">Saving...</span>
                 </button>
             </div>
         </div>
