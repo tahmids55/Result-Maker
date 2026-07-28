@@ -6,8 +6,25 @@
     <title>ResultMaker – Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="h-full flex items-center justify-center">
-<div class="w-full max-w-md px-4">
+<body class="h-full flex items-center justify-center relative overflow-hidden">
+@php
+    $bgFiles = \Illuminate\Support\Facades\File::exists(public_path('login_backgrounds')) 
+                ? \Illuminate\Support\Facades\File::files(public_path('login_backgrounds')) 
+                : [];
+    $bgUrls = array_map(function($file) {
+        return asset('login_backgrounds/' . $file->getFilename());
+    }, $bgFiles);
+@endphp
+    <div id="bg-slider-container" class="absolute inset-0 z-[-1]">
+        @forelse($bgUrls as $index => $url)
+            <div class="absolute inset-0 bg-cover bg-center blur-md scale-105 transition-opacity duration-1000 ease-in-out {{ $index === 0 ? 'opacity-100' : 'opacity-0' }}" 
+                 style="background-image: url('{{ $url }}');">
+            </div>
+        @empty
+            <div class="absolute inset-0 bg-slate-900"></div>
+        @endforelse
+    </div>
+<div class="w-full max-w-md px-4 relative">
     <div class="bg-white rounded-2xl shadow-2xl p-8">
         {{-- Logo --}}
         <div class="flex items-center justify-center gap-3 mb-8">
@@ -53,5 +70,20 @@
         </p>
     </div>
 </div>
+<script>
+    const backgrounds = document.querySelectorAll('#bg-slider-container > div');
+    if (backgrounds.length > 1) {
+        let currentIndex = 0;
+        setInterval(() => {
+            backgrounds[currentIndex].classList.remove('opacity-100');
+            backgrounds[currentIndex].classList.add('opacity-0');
+            
+            currentIndex = (currentIndex + 1) % backgrounds.length;
+            
+            backgrounds[currentIndex].classList.remove('opacity-0');
+            backgrounds[currentIndex].classList.add('opacity-100');
+        }, 5000);
+    }
+</script>
 </body>
 </html>
