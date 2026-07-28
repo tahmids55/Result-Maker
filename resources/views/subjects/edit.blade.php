@@ -130,6 +130,7 @@
                     <template x-for="(sub, sIndex) in subSubjects" :key="sIndex">
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                             <div class="flex items-center justify-between mb-3">
+                                <input type="hidden" :name="`sub_subjects[${sIndex}][id]`" x-model="sub.id" x-bind:disabled="!sub.id">
                                 <input type="text" :name="`sub_subjects[${sIndex}][name]`" x-bind:required="hasSubSubjects"
                                        x-model="sub.name" placeholder="Paper Name (e.g. Bangla 1st Paper)"
                                        class="w-2/3 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none font-medium">
@@ -207,6 +208,7 @@ function subjectEditForm() {
     @php
         $existingSubSubjects = $subject->subSubjects->map(function($sub) {
             return [
+                'id' => $sub->id,
                 'name' => $sub->name,
                 'components' => collect($sub->exam_components)->map(fn($v, $k) => ['name' => $k, 'full' => $v['full'], 'pass' => $v['pass']])->values()->all()
             ];

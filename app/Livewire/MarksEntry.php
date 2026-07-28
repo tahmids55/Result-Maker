@@ -194,6 +194,17 @@ class MarksEntry extends Component
             $config = $this->resolveComponentConfig($subject, (int) $subId, $comp);
             if (!$config) continue;
 
+            if (isset($item['value']) && $item['value'] === '') {
+                // The user cleared the input, so we should delete the mark
+                Mark::where('student_id', (int) $sid)
+                    ->where('subject_id', (int) $subjId)
+                    ->where('sub_subject_id', (int) $subId ?: null)
+                    ->where('exam_id', $this->examId)
+                    ->where('component', $comp)
+                    ->delete();
+                continue;
+            }
+
             $obtained = (float) ($item['value'] ?? 0);
             if ($obtained > $config['full']) {
                 $errors[] = "Exceeds max for {$comp}";

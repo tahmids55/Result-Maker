@@ -65,22 +65,6 @@
                         sans: ['Inter', 'sans-serif'],
                         display: ['Outfit', 'sans-serif'],
                     },
-                    colors: {
-                        slate: {
-                            850: '#151e2e',
-                            900: '#0f172a',
-                            950: '#020617',
-                        },
-                        indigo: {
-                            400: '#818cf8',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                        },
-                        violet: {
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
-                        }
-                    },
                     animation: {
                         'blob': 'blob 7s infinite',
                         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
@@ -109,28 +93,28 @@
     <style>
         [x-cloak] { display: none !important; }
         .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(0, 0, 0, 0.25);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         .text-gradient {
-            background: linear-gradient(to right, #818cf8, #c084fc, #f472b6);
+            background: linear-gradient(to right, #e2e8f0, #d4c5a9, #f5f0e8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .mesh-bg {
-            background-color: #020617;
+            background-color: #0a0a0a;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(56, 189, 248, 0.15) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(80, 60, 30, 0.18) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(50, 40, 20, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(30, 25, 15, 0.2) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(60, 50, 25, 0.15) 0px, transparent 50%);
         }
     </style>
 </head>
-<body class="antialiased text-slate-300 mesh-bg min-h-screen selection:bg-indigo-500/30 selection:text-indigo-200">
+<body class="antialiased text-slate-300 mesh-bg min-h-screen selection:bg-white/20 selection:text-white">
     
     <header>
     <!-- Navigation -->
@@ -138,10 +122,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center gap-3 group cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:shadow-indigo-500/50 transition-all duration-300 transform group-hover:scale-105">
-                        <span class="text-white font-display font-bold text-xl">M</span>
-                    </div>
-                    <span class="font-display font-bold text-xl text-white tracking-tight">ResultMaker</span>
+                    <img src="{{ asset('large.png') }}" alt="ResultMaker" class="h-9 w-auto invert opacity-90 group-hover:opacity-100 transition-opacity">
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-8 text-sm font-medium">
@@ -150,10 +131,10 @@
                     
                     <div class="flex items-center space-x-4 pl-4 border-l border-white/10">
                         @auth
-                            <a href="{{ route('dashboard') }}" class="text-white hover:text-indigo-300 transition-colors">Dashboard</a>
+                            <a href="{{ route('dashboard') }}" class="text-white hover:text-stone-300 transition-colors">Dashboard</a>
                         @else
                             <a href="{{ route('login') }}" class="text-slate-300 hover:text-white transition-colors">Log in</a>
-                            <a href="{{ route('register') }}" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                            <a href="{{ route('register') }}" class="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20 transition-all duration-300 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:shadow-[0_0_20px_rgba(255,255,255,0.15)]">
                                 Get Started
                             </a>
                         @endauth
@@ -199,16 +180,16 @@
     <!-- Hero Section -->
     <section class="relative pt-32 pb-20 sm:pt-40 sm:pb-24 lg:pb-32 overflow-hidden">
         <!-- Animated Background Orbs -->
-        <div class="absolute top-0 -left-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-screen filter blur-[128px] opacity-20 animate-blob"></div>
-        <div class="absolute top-0 -right-4 w-72 h-72 bg-violet-500 rounded-full mix-blend-screen filter blur-[128px] opacity-20 animate-blob animation-delay-2000"></div>
-        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-screen filter blur-[128px] opacity-20 animate-blob animation-delay-4000"></div>
+        <div class="absolute top-0 -left-4 w-96 h-96 bg-stone-600 rounded-full mix-blend-screen filter blur-[160px] opacity-10 animate-blob"></div>
+        <div class="absolute top-0 -right-4 w-96 h-96 bg-stone-400 rounded-full mix-blend-screen filter blur-[160px] opacity-10 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-72 h-72 bg-neutral-600 rounded-full mix-blend-screen filter blur-[128px] opacity-10 animate-blob animation-delay-4000"></div>
 
         <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-8 animate-fade-in-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-stone-300 text-sm font-medium mb-8 animate-fade-in-up">
                 <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-stone-300 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-stone-200"></span>
                 </span>
                 ResultMaker 2.0 is now live
             </div>
@@ -223,10 +204,10 @@
             </p>
             
             <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4 animate-fade-in-up" style="animation-delay: 0.3s;">
-                <a href="{{ route('register') }}" class="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:shadow-[0_0_40px_rgba(99,102,241,0.5)] hover:scale-105 transition-all duration-300">
+                <a href="{{ route('register') }}" class="px-8 py-4 rounded-full bg-white text-gray-900 font-bold shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] hover:scale-105 transition-all duration-300">
                     Start for free
                 </a>
-                <a href="#features" class="px-8 py-4 rounded-full glass-panel text-white font-semibold hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2">
+                <a href="#features" class="px-8 py-4 rounded-full glass-panel text-white font-semibold hover:bg-white/10 transition-all duration-300 flex items-center justify-center gap-2">
                     Explore features 
                     <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </a>
@@ -234,16 +215,16 @@
             
             <!-- Dashboard Preview Image -->
             <div class="mt-12 sm:mt-20 relative max-w-5xl mx-auto animate-fade-in-up" style="animation-delay: 0.4s;">
-                <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-2xl blur opacity-20"></div>
+                <div class="absolute -inset-1 bg-gradient-to-r from-stone-500/30 to-neutral-400/20 rounded-2xl blur opacity-40"></div>
                 <div class="relative rounded-2xl glass-panel p-2 ring-1 ring-white/10 shadow-2xl">
-                    <div class="rounded-xl overflow-hidden bg-slate-900 aspect-video flex items-center justify-center border border-white/5 relative">
-                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+                    <div class="rounded-xl overflow-hidden bg-black/60 aspect-video flex items-center justify-center border border-white/5 relative">
+                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
                         <div class="text-center z-10">
-                            <div class="w-20 h-20 bg-indigo-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-indigo-500/30">
-                                <svg aria-hidden="true" class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                            <div class="w-20 h-20 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10">
+                                <svg aria-hidden="true" class="w-10 h-10 text-stone-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                             </div>
                             <h3 class="text-2xl font-display font-semibold text-white mb-2">Powerful Dashboard</h3>
-                            <p class="text-slate-400">Sign in to experience the real application.</p>
+                            <p class="text-stone-400">Sign in to experience the real application.</p>
                         </div>
                     </div>
                 </div>
@@ -255,7 +236,7 @@
     <section id="features" class="py-24 relative z-10">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-indigo-400 font-semibold tracking-wide uppercase text-sm mb-3">Capabilities</h2>
+                <h2 class="text-stone-300 font-semibold tracking-widest uppercase text-xs mb-3 letter-spacing-wider">Capabilities</h2>
                 <p class="text-3xl sm:text-4xl font-display font-bold text-white">Everything you need to run exams</p>
             </div>
             
@@ -291,11 +272,11 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="py-24 relative z-10 border-t border-white/5 bg-slate-900/50 mt-12">
+    <section class="py-24 relative z-10 border-t border-white/5 bg-black/30 mt-12">
         <div class="max-w-4xl mx-auto px-4 text-center">
             <h2 class="text-3xl sm:text-5xl font-display font-bold text-white mb-6">Ready to transform your school?</h2>
-            <p class="text-slate-400 text-lg mb-10">Join schools around the world that use ResultMaker to save hundreds of hours on result processing.</p>
-            <a href="{{ route('register') }}" class="px-8 py-4 rounded-full bg-white text-slate-900 font-bold hover:scale-105 transition-transform duration-300 inline-block">
+            <p class="text-stone-400 text-lg mb-10">Join schools around the world that use ResultMaker to save hundreds of hours on result processing.</p>
+            <a href="{{ route('register') }}" class="px-8 py-4 rounded-full bg-white text-gray-900 font-bold hover:scale-105 transition-transform duration-300 shadow-[0_0_30px_rgba(255,255,255,0.15)] hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] inline-block">
                 Create an account
             </a>
         </div>
@@ -303,10 +284,9 @@
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-white/10 bg-slate-950 py-12 text-center text-slate-500 text-sm">
+    <footer class="border-t border-white/10 bg-black/60 py-12 text-center text-stone-500 text-sm">
         <div class="flex items-center justify-center gap-2 mb-4">
-            <div class="w-6 h-6 bg-indigo-600 rounded flex items-center justify-center text-white font-bold text-xs">M</div>
-            <span class="font-bold text-white">ResultMaker</span>
+            <img src="{{ asset('large.png') }}" alt="ResultMaker" class="h-8 w-auto invert opacity-80">
         </div>
         <p>&copy; {{ date('Y') }} ResultMaker Inc. All rights reserved.</p>
     </footer>

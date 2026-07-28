@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SchoolClass;
 use App\Models\Section;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -76,6 +77,14 @@ class SectionController extends Controller
     {
         if ($section->students()->exists()) {
             return back()->with('error', 'Cannot delete section with existing students.');
+        }
+
+        // Check if any subjects in this section have marks
+        $subjectsWithMarks = Subject::where('section_id', $section->id)
+            ->whereHas('marks')
+            ->exists();
+        if ($subjectsWithMarks) {
+            return back()->with('error', 'Cannot delete section with existing marks. Delete the marks first.');
         }
 
         $section->delete();

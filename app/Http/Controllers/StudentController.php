@@ -147,6 +147,10 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        if ($student->marks()->exists()) {
+            return back()->with('error', 'Cannot delete student with existing marks. Delete their marks first.');
+        }
+
         if ($student->profile_photo) {
             Storage::disk('public')->delete($student->profile_photo);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Mark;
 use App\Models\SchoolClass;
 use App\Models\Section;
 use App\Models\Subject;
@@ -160,9 +161,8 @@ class SubjectController extends Controller
             'sort_order'      => $request->sort_order ?? 0,
         ]);
 
-        $subject->subSubjects()->delete(); // Recreate them for simplicity
-        
         if ($hasSubSubjects && $request->sub_subjects) {
+            $existingIds = [];
             foreach ($request->sub_subjects as $index => $subReq) {
                 $subComponents = [];
                 foreach ($subReq['components'] as $comp) {
@@ -172,12 +172,43 @@ class SubjectController extends Controller
                         'pass' => (float) $comp['pass'],
                     ];
                 }
-                $subject->subSubjects()->create([
+                
+                if (isset($subReq['id']) && $subReq['id']) {
+                    $subSubject = $subject->subSubjects()->find($subReq['id']);
+                    if ($subSubject) {
+                        $subSubject->update([
+                            'name' => $subReq['name'],
+                            'exam_components' => $subComponents,
+                            'sort_order' => $index,
+                        ]);
+                        $existingIds[] = $subSubject->id;
+                        continue;
+                    }
+                }
+                
+                $newSub = $subject->subSubjects()->create([
                     'name' => $subReq['name'],
                     'exam_components' => $subComponents,
                     'sort_order' => $index,
                 ]);
+                $existingIds[] = $newSub->id;
             }
+            
+            // Delete sub-subjects that were removed from the form — but ONLY if they have no marks
+            $removedSubs = $subject->subSubjects()->whereNotIn('id', $existingIds)->get();
+            foreach ($removedSubs as $removedSub) {
+                if (Mark::where('sub_subject_id', $removedSub->id)->exists()) {
+                    return back()->with('error', "Cannot remove paper \"{$removedSub->name}\" because it has existing marks. Delete the marks first.");
+                }
+            }
+            $subject->subSubjects()->whereNotIn('id', $existingIds)->delete();
+        } else {
+            // If switching away from sub-subjects, only delete if no marks exist
+            $subsWithMarks = $subject->subSubjects()->whereHas('marks')->count();
+            if ($subsWithMarks > 0) {
+                return back()->with('error', 'Cannot remove papers because they have existing marks. Delete the marks first.');
+            }
+            $subject->subSubjects()->delete();
         }
 
         return redirect()->route('subjects.index')->with('success', 'Subject updated.');
@@ -233,7 +264,10 @@ class SubjectController extends Controller
                     'section_id'      => $request->to_section_id,
                     'exam_components' => $subject->exam_components,
                     'is_optional'     => $subject->is_optional,
-                    'accumulated_pass_marks' => $subject->accumulated_pass_marks,
+                    'full_marks'      => $subject->full_marks,
+                    'pass_marks'      => $subject->pass_marks,
+                    'is_individual_pass' => $subject->is_individual_pass,
+                    'has_sub_subjects'=> $subject->has_sub_subjects,
                     'sort_order'      => $subject->sort_order,
                 ]);
                 $count++;

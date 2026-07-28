@@ -68,6 +68,14 @@ class ClassController extends Controller
             return back()->with('error', 'Cannot delete class with existing students.');
         }
 
+        // Check if any subjects in this class have marks
+        $subjectsWithMarks = \App\Models\Subject::where('class_id', $class->id)
+            ->whereHas('marks')
+            ->exists();
+        if ($subjectsWithMarks) {
+            return back()->with('error', 'Cannot delete class with existing marks. Delete the marks first.');
+        }
+
         $class->delete();
         return redirect()->route('classes.index')
             ->with('success', 'Class deleted.');
