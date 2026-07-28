@@ -27,13 +27,12 @@ def combine_all_docx(filename_master, files_list, output_filename):
     composer = Composer(master)
     
     # Append the rest
+    # Note: do NOT add a manual page break before each append — docxcompose handles
+    # document boundaries cleanly, and each marksheet template already occupies a full
+    # page. Adding an explicit page break here caused a blank page to appear between
+    # every pair of marksheets (doubling the page count).
     for file in files_list:
         doc = Document(file)
-        # Add a page break if needed? docxcompose usually handles append without explicitly needing a page break,
-        # but to ensure each student's marksheet starts on a new page, we might want to add a page break.
-        # However, typically marksheet templates themselves occupy a full page.
-        # Let's add a page break to the master before appending the next doc
-        master.add_page_break()
         composer.append(doc)
     
     composer.save(output_filename)
