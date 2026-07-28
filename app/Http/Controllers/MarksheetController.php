@@ -154,11 +154,33 @@ class MarksheetController extends Controller
         $batchName = "{$schoolClass->name} - {$sectionObj->name} ({$exam->name})";
         $safeBatchName = \Illuminate\Support\Str::slug($batchName, '_');
 
+        $syncBatchId = $request->input('sync_batch_id');
+        $totalStudents = $students->count();
+
         // Collect all individual DOCX files
         $generatedDocxPaths = [];
-        foreach ($students as $student) {
+        foreach ($students as $index => $student) {
+            if ($syncBatchId) {
+                $pct = $totalStudents > 0 ? round((($index + 1) / $totalStudents) * 90) : 0; // go up to 90% during generation
+                \Illuminate\Support\Facades\Cache::put("marksheet_batch:{$syncBatchId}", [
+                    'stage'   => 'Generating marksheets',
+                    'detail'  => "Processing {$student->name} (Roll {$student->roll})",
+                    'pct'     => $pct,
+                    'status'  => 'processing',
+                ], 60);
+            }
+
             $docPath = $this->service->generateForStudent($student, $exam, $template, false);
             $generatedDocxPaths[] = Storage::disk('local')->path($docPath);
+        }
+
+        if ($syncBatchId) {
+            \Illuminate\Support\Facades\Cache::put("marksheet_batch:{$syncBatchId}", [
+                'stage'   => 'Finalizing Document',
+                'detail'  => $format === 'pdf' ? 'Converting to PDF format...' : 'Merging Word files...',
+                'pct'     => 95,
+                'status'  => 'processing',
+            ], 60);
         }
 
         $tempDirRelative = "batch_temp/" . Str::uuid();

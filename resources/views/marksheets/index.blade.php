@@ -168,13 +168,25 @@
                  style="display: none; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
                  
                 <template x-if="!isDone">
-                    <div class="flex flex-col items-center text-center px-4">
-                        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <div class="flex flex-col justify-center w-full px-8 md:px-12">
+                        <svg class="animate-spin h-10 w-10 text-green-600 mb-6 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        <div class="text-sm font-semibold text-gray-800">Generating Document...</div>
-                        <div class="text-xs text-gray-500 mt-1">Please wait, converting files.</div>
+                        
+                        <div class="w-full max-w-sm mx-auto">
+                            <div class="flex justify-between items-end mb-2">
+                                <div class="text-left">
+                                    <div class="text-sm font-semibold text-gray-800" x-text="stage">Generating Document...</div>
+                                    <div class="text-xs text-gray-500 mt-0.5" x-text="detail">Please wait, converting files.</div>
+                                </div>
+                                <div class="text-xl font-bold text-green-600 tabular-nums leading-none" x-text="pct + '%'">0%</div>
+                            </div>
+                            
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                                <div class="bg-green-500 h-2.5 rounded-full transition-all duration-300 ease-out" :style="'width: ' + pct + '%'"></div>
+                            </div>
+                        </div>
                     </div>
                 </template>
                 
@@ -359,13 +371,43 @@ function syncGenerator() {
     return {
         isGenerating: false,
         isDone: false,
+        pct: 0,
+        stage: 'Initializing',
+        detail: 'Preparing documents...',
+        syncBatchId: null,
+        pollTimer: null,
+        
+        async pollProgress() {
+            try {
+                const res = await fetch(`/marksheets/batch-progress?batch_id=${this.syncBatchId}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status && data.status !== 'done' && data.status !== 'failed') {
+                        this.pct = data.pct;
+                        this.stage = data.stage;
+                        this.detail = data.detail;
+                    }
+                }
+            } catch (err) {}
+        },
+
         async submitForm(e) {
             e.preventDefault();
             this.isGenerating = true;
             this.isDone = false;
+            this.pct = 0;
+            this.stage = 'Initializing';
+            this.detail = 'Preparing documents...';
+            this.syncBatchId = 'sync_' + Math.random().toString(36).substr(2, 9);
             
             const form = e.target;
             const formData = new FormData(form);
+            formData.append('sync_batch_id', this.syncBatchId);
+            
+            // Start polling progress every 500ms
+            this.pollTimer = setInterval(() => this.pollProgress(), 500);
             
             try {
                 const res = await fetch(form.action, {
@@ -376,6 +418,9 @@ function syncGenerator() {
                         'Accept': 'application/json'
                     }
                 });
+                
+                clearInterval(this.pollTimer);
+                this.pct = 100;
                 
                 if (res.ok) {
                     const blob = await res.blob();
@@ -406,6 +451,7 @@ function syncGenerator() {
                     this.isGenerating = false;
                 }
             } catch (err) {
+                clearInterval(this.pollTimer);
                 alert('An error occurred while generating documents.');
                 console.error(err);
                 this.isGenerating = false;
