@@ -13,7 +13,7 @@ class GeneratedMarksheet extends Model
     use HasFactory;
 
     protected $fillable = [
-        'student_id', 'exam_id', 'template_id', 'file_path', 'file_type', 'generated_at', 'user_id'
+        'student_id', 'batch_name', 'exam_id', 'template_id', 'file_path', 'file_type', 'generated_at', 'user_id'
     ];
 
     protected $casts = [

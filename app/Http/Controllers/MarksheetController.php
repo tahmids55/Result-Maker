@@ -142,11 +142,17 @@ class MarksheetController extends Controller
         $students = $query->get();
 
         if ($students->isEmpty()) {
+            if ($request->ajax()) return response()->json(['error' => 'No students found for the selected criteria.'], 400);
             return back()->with('error', 'No students found for the selected criteria.');
         }
 
         $mode   = $request->output_mode;
         $format = $request->output_format;
+
+        $schoolClass = \App\Models\SchoolClass::find($request->class_id);
+        $sectionObj  = \App\Models\Section::find($request->section_id);
+        $batchName = "{$schoolClass->name} - {$sectionObj->name} ({$exam->name})";
+        $safeBatchName = \Illuminate\Support\Str::slug($batchName, '_');
 
         // Collect all individual DOCX files
         $generatedDocxPaths = [];
@@ -165,17 +171,19 @@ class MarksheetController extends Controller
             $merged = $this->conversionService->mergeDocx($generatedDocxPaths, $mergedDocxPath);
             
             if (!$merged) {
+                if ($request->ajax()) return response()->json(['error' => 'Failed to merge DOCX files into a single document.'], 400);
                 return back()->with('error', 'Failed to merge DOCX files into a single document.');
             }
 
             if ($format === 'pdf') {
                 $pdfPath = $this->conversionService->convertDocxToPdf($mergedDocxPath, $tempDir);
                 if (!$pdfPath) {
+                    if ($request->ajax()) return response()->json(['error' => 'Failed to convert to PDF. Please ensure ONLYOFFICE Document Server is running.'], 400);
                     return back()->with('error', 'Failed to convert to PDF. Please ensure ONLYOFFICE Document Server is running.');
                 }
-                return response()->download($pdfPath, "marksheets_{$exam->name}_Combined.pdf")->deleteFileAfterSend(true);
+                return response()->download($pdfPath, "{$safeBatchName}_marksheet.pdf")->deleteFileAfterSend(true);
             } else {
-                return response()->download($mergedDocxPath, "marksheets_{$exam->name}_Combined.docx")->deleteFileAfterSend(true);
+                return response()->download($mergedDocxPath, "{$safeBatchName}_marksheet.docx")->deleteFileAfterSend(true);
             }
         } else {
             // Individual mode (ZIP)
@@ -183,6 +191,7 @@ class MarksheetController extends Controller
             $zipFileName = $tempDir . "/marksheets.zip";
             
             if ($zip->open($zipFileName, \ZipArchive::CREATE) !== true) {
+                if ($request->ajax()) return response()->json(['error' => 'Cannot create zip archive.'], 400);
                 return back()->with('error', "Cannot create zip archive.");
             }
 
@@ -203,10 +212,11 @@ class MarksheetController extends Controller
             $zip->close();
 
             if ($pdfFailed) {
+                if ($request->ajax()) return response()->json(['error' => 'Failed to convert one or more marksheets to PDF. Please ensure ONLYOFFICE Document Server is running.'], 400);
                 return back()->with('error', 'Failed to convert one or more marksheets to PDF. Please ensure ONLYOFFICE Document Server is running.');
             }
 
-            return response()->download($zipFileName, "marksheets_{$exam->name}_Individual.zip")->deleteFileAfterSend(true);
+            return response()->download($zipFileName, "{$safeBatchName}_marksheet.zip")->deleteFileAfterSend(true);
         }
     }
 
@@ -220,7 +230,12 @@ class MarksheetController extends Controller
         if ($marksheet->student_id === null) {
             // It's a batch
             $ext = pathinfo($path, PATHINFO_EXTENSION);
-            $filename = "marksheet_batch_{$marksheet->exam->name}.{$ext}";
+            if (!empty($marksheet->batch_name)) {
+                $cleanName = \Illuminate\Support\Str::slug($marksheet->batch_name, '_');
+                $filename = "{$cleanName}_marksheet.{$ext}";
+            } else {
+                $filename = "marksheet_batch_{$marksheet->exam->name}.{$ext}";
+            }
         } else {
             // It's an individual
             $filename = "marksheet_{$marksheet->student->name}_{$marksheet->exam->name}.docx";

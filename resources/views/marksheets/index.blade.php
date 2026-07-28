@@ -155,11 +155,44 @@
         </div>
 
         {{-- Sync Generation --}}
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div x-data="syncGenerator()" class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 relative overflow-hidden">
+            <!-- Overlay for Sync Generation -->
+            <div x-show="isGenerating"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl"
+                 style="display: none; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+                 
+                <template x-if="!isDone">
+                    <div class="flex flex-col items-center text-center px-4">
+                        <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-green-600 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <div class="text-sm font-semibold text-gray-800">Generating Document...</div>
+                        <div class="text-xs text-gray-500 mt-1">Please wait, converting files.</div>
+                    </div>
+                </template>
+                
+                <template x-if="isDone">
+                    <div class="flex flex-col items-center text-center px-4 w-full">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <div class="text-sm font-semibold text-gray-800">Download Ready!</div>
+                        <div class="text-xs text-gray-500 mt-1 mb-4">Your file is downloading automatically.</div>
+                    </div>
+                </template>
+            </div>
+
             <h2 class="text-base font-semibold text-gray-800 mb-1">Generate & Download (Sync – Small Classes)</h2>
             <p class="text-xs text-gray-500 mb-5">Generates immediately and downloads a ZIP. Best for ≤30 students.</p>
 
-            <form method="POST" action="{{ route('marksheets.generate-sync') }}" class="space-y-4">
+            <form method="POST" action="{{ route('marksheets.generate-sync') }}" @submit.prevent="submitForm" class="space-y-4">
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -227,7 +260,7 @@
                     </div>
                 </div>
                 <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg transition-colors text-sm">
-                    ⬇ Generate & Download ZIP
+                    ⬇ Generate & Download
                 </button>
             </form>
         </div>
@@ -320,6 +353,65 @@ function batchTracker(batchId) {
             this.$el.remove();
         }
     };
+}
+
+function syncGenerator() {
+    return {
+        isGenerating: false,
+        isDone: false,
+        async submitForm(e) {
+            e.preventDefault();
+            this.isGenerating = true;
+            this.isDone = false;
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            
+            try {
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const disposition = res.headers.get('Content-Disposition');
+                    let filename = 'marksheet.zip'; // fallback
+                    if (disposition && disposition.includes('filename=')) {
+                        filename = disposition.split('filename=')[1].replace(/"/g, '');
+                    }
+                    
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Show success
+                    this.isDone = true;
+                    setTimeout(() => {
+                        this.isGenerating = false;
+                        this.isDone = false;
+                    }, 3500); // Wait 3.5 seconds before vanishing
+                } else {
+                    const errorData = await res.json().catch(() => ({}));
+                    alert('Generation Failed: ' + (errorData.error || 'Unknown error occurred.'));
+                    this.isGenerating = false;
+                }
+            } catch (err) {
+                alert('An error occurred while generating documents.');
+                console.error(err);
+                this.isGenerating = false;
+            }
+        }
+    }
 }
 </script>
 @endpush

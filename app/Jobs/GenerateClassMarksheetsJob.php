@@ -55,6 +55,9 @@ class GenerateClassMarksheetsJob implements ShouldQueue
     public function handle(MarksheetGenerationService $service, DocumentConversionService $conversionService): void
     {
         try {
+            // Login the user to ensure BelongsToUser trait correctly scopes/injects user_id
+            \Illuminate\Support\Facades\Auth::loginUsingId($this->userId);
+
             $exam     = Exam::findOrFail($this->examId);
             $template = MarksheetTemplate::findOrFail($this->templateId);
             $class    = SchoolClass::findOrFail($this->classId);
