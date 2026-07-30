@@ -182,16 +182,16 @@ class ResultCalculationService
 
             if ($subject->is_optional) {
                 // For optional subject, failing it does not cause the student to fail the exam.
-                // (Notice we DO NOT increment $failedSubjects here)
-                
-                // GPA bonus is (Optional GPA - 2), min 0. (max is used programmatically to bound above 0)
-                $bonusGpa = max(0, $gradeInfo['gpa'] - 2.0);
-                $totalGpa += $bonusGpa;
-                
-                // Optional marks bonus: exclude 40, add the rest.
-                $bonusMarks = max(0, $subjectObtained - 40);
-                $totalObtained += $bonusMarks;
-                // Optional full marks are usually excluded from total full marks.
+                if ($subjectPassed) {
+                    // GPA bonus is (Optional GPA - 2), min 0.
+                    $bonusGpa = max(0, $gradeInfo['gpa'] - 2.0);
+                    $totalGpa += $bonusGpa;
+                    
+                    // Optional marks bonus: exclude 40, add the rest.
+                    $bonusMarks = max(0, $subjectObtained - 40);
+                    $totalObtained += $bonusMarks;
+                }
+                // Optional full marks are always excluded from total full marks.
             } else {
                 if (!$subjectPassed) {
                     $failedSubjects++;

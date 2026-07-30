@@ -123,10 +123,23 @@ document.addEventListener('alpine:init', () => {
                 const pct = subjFull > 0 ? (subjObt / subjFull) * 100 : 0;
                 let gradeInfo = !subjectPassed ? { grade: 'F', gpa: 0 } : this._lookupGrade(pct);
 
-                if (subj.is_optional) {
-                    const bonus = Math.max(0, gradeInfo.gpa - 2.0);
-                    totalGpa += bonus;
-                    totalObt += Math.max(0, subjObt - 40);
+                if (this.subjects.length === 1 && subj.is_optional) {
+                    // If the teacher filters to ONLY the optional subject, preview it as a normal subject
+                    // so the row's "Total Grade" column doesn't falsely show "F" due to 0 normal subjects.
+                    if (!subjectPassed) {
+                        failed = true;
+                        gradeInfo = { grade: 'F', gpa: 0 };
+                    }
+                    totalGpa += gradeInfo.gpa;
+                    normalCount++;
+                    totalObt += subjObt;
+                    totalFull += subjFull;
+                } else if (subj.is_optional) {
+                    if (subjectPassed) {
+                        const bonus = Math.max(0, gradeInfo.gpa - 2.0);
+                        totalGpa += bonus;
+                        totalObt += Math.max(0, subjObt - 40);
+                    }
                 } else {
                     if (!subjectPassed) {
                         failed = true;
