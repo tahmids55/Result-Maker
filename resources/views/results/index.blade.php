@@ -50,7 +50,7 @@
         </form>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {{-- Merit List --}}
         @if(auth()->user()->isAdmin())
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
@@ -149,23 +149,23 @@
             </form>
         </div>
         @endif
+    </div>
 
-        {{-- Info --}}
-        <div class="bg-blue-50 rounded-xl border border-blue-200 p-5">
-            <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 How Results Work</h3>
-            <ul class="text-xs text-blue-700 space-y-1 leading-relaxed">
-                @if(auth()->user()->isAdmin())
-                    <li>• Results are calculated automatically from marks</li>
-                    <li>• GPA follows Bangladesh SSC/HSC scale (5.0)</li>
-                    <li>• Click <strong>Recalculate</strong> after editing marks</li>
-                    <li>• Merit ranks are assigned within each class-section</li>
-                    <li>• Failed subjects result in overall Fail status</li>
-                @else
-                    <li>• You can preview the marks you entered for your assigned subjects here.</li>
-                    <li>• Overall calculation is handled by the school administration.</li>
-                @endif
-            </ul>
-        </div>
+    {{-- Info --}}
+    <div class="bg-blue-50 rounded-xl border border-blue-200 p-5">
+        <h3 class="text-sm font-semibold text-blue-800 mb-2">💡 How Results Work</h3>
+        <ul class="text-xs text-blue-700 space-y-1 leading-relaxed">
+            @if(auth()->user()->isAdmin())
+                <li>• Results are calculated automatically from marks</li>
+                <li>• GPA follows Bangladesh SSC/HSC scale (5.0)</li>
+                <li>• Click <strong>Recalculate</strong> after editing marks</li>
+                <li>• Merit ranks are assigned within each class-section</li>
+                <li>• Failed subjects result in overall Fail status</li>
+            @else
+                <li>• You can preview the marks you entered for your assigned subjects here.</li>
+                <li>• Overall calculation is handled by the school administration.</li>
+            @endif
+        </ul>
     </div>
 </div>
 @endsection

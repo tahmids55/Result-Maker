@@ -14,14 +14,14 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 5mm;
+            margin: 10mm 15mm;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Helvetica', 'Arial', sans-serif; 
             font-size: {{ $fs['cell'] }}; 
-            margin: 0;
+            margin: 0 10px;
             padding: 0;
         }
         
@@ -85,11 +85,11 @@
         .tb { font-weight: bold; }
         .ft { color: red; }
 
-        .signature-table { width: 100%; margin-top: 15mm; font-size: {{ $fs['header'] }}; font-weight: bold; }
+        .signature-table { width: 100%; margin-top: 8mm; font-size: {{ $fs['header'] }}; font-weight: bold; }
         .signature-table td { border: none; padding: 0; }
         .sig-box { width: 45mm; border-top: 1px dashed #000; text-align: center; padding-top: 2px; }
 
-        .ftr { width: 100%; font-size: {{ $fs['header'] }}; margin-top: 4mm; }
+        .ftr { width: 100%; font-size: {{ $fs['header'] }}; margin-top: 2mm; }
         .ftr td { border: none; padding: 1mm; }
     </style>
 </head>
@@ -102,11 +102,15 @@
     foreach ($subjects as $subject) {
         $cols = [];
         if ($subject->has_sub_subjects && $subject->subSubjects->count() > 0) {
+            $subIdx = 1;
+            $subjectInit = strtoupper(substr(trim($subject->name), 0, 1));
             foreach ($subject->subSubjects as $sub) {
                 $comps = $sub->exam_components ?? [];
                 foreach ($comps as $compName => $compConfig) {
-                    $cols[] = ['type' => 'comp', 'sub_id' => $sub->id, 'comp' => $compName, 'label' => strtoupper(substr($compName, 0, 2))];
+                    $compPrefix = strtoupper(substr($compName, 0, 2));
+                    $cols[] = ['type' => 'comp', 'sub_id' => $sub->id, 'comp' => $compName, 'label' => "{$compPrefix} ({$subjectInit}{$subIdx})"];
                 }
+                $subIdx++;
             }
         } else {
             $comps = $subject->exam_components ?? [];

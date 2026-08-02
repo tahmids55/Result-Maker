@@ -229,10 +229,10 @@ class ResultController extends Controller
         ->setPaper('a4', 'landscape')
         ->setOption('defaultFont', 'Helvetica')
         ->setOption('isFontSubsettingEnabled', true)
-        ->setOption('margin_top', 0)
-        ->setOption('margin_bottom', 0)
-        ->setOption('margin_left', 0)
-        ->setOption('margin_right', 0);
+        ->setOption('margin_top', 10)
+        ->setOption('margin_bottom', 10)
+        ->setOption('margin_left', 10)
+        ->setOption('margin_right', 10);
 
         $filename = "Tabulation_Sheet_{$class->name}_{$section->name}.pdf";
         $filename = str_replace(['/', '\\'], '_', $filename);
