@@ -1,6 +1,58 @@
 @extends('layouts.app')
 @section('title', 'Activity History')
 
+@php
+if (!function_exists('resolveIdToName')) {
+    function resolveIdToName($field, $val) {
+        if (!is_numeric($val) || $val <= 0 || !\Illuminate\Support\Str::endsWith($field, '_id')) {
+            return null;
+        }
+        static $modelCache = [];
+        $relation = str_replace('_id', '', $field);
+        
+        $customMap = [
+            'class' => 'SchoolClass',
+        ];
+        
+        $modelName = $customMap[$relation] ?? \Illuminate\Support\Str::studly($relation);
+        $modelClass = '\\App\\Models\\' . $modelName;
+        
+        $cacheKey = $modelClass . '_' . $val;
+        if (array_key_exists($cacheKey, $modelCache)) {
+            return $modelCache[$cacheKey];
+        }
+        
+        if (class_exists($modelClass)) {
+            try {
+                if (class_basename($modelClass) === 'Student') {
+                    $record = $modelClass::with(['schoolClass', 'section'])->find($val);
+                } else {
+                    $record = $modelClass::find($val);
+                }
+
+                if ($record) {
+                    $name = $record->name ?? $record->title ?? $record->first_name ?? $record->username ?? null;
+                    if ($name) {
+                        if (class_basename($modelClass) === 'Student') {
+                            $cName = $record->schoolClass->name ?? '-';
+                            $sName = $record->section->name ?? '-';
+                            $roll = $record->roll ?? '-';
+                            $name .= " (Class: $cName | Sec: $sName | Roll: $roll)";
+                        }
+                        $result = $name . " [#$val]";
+                        $modelCache[$cacheKey] = $result;
+                        return $result;
+                    }
+                }
+            } catch (\Exception $e) {}
+        }
+        
+        $modelCache[$cacheKey] = null;
+        return null;
+    }
+}
+@endphp
+
 @section('content')
 <div class="py-4 space-y-4">
 
@@ -80,37 +132,37 @@
             </div>
         @else
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-gray-50/80 border-b border-gray-200 text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
-                            <th class="py-2.5 px-3.5 w-24">Event</th>
-                            <th class="py-2.5 px-3.5">Action & Description</th>
-                            <th class="py-2.5 px-3.5 w-36">Target Entity</th>
-                            <th class="py-2.5 px-3.5 w-40">User</th>
-                            <th class="py-2.5 px-3.5 w-44">Date & Time</th>
-                            <th class="py-2.5 px-3.5 w-24 text-right">Details</th>
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 font-semibold uppercase tracking-wider text-[10px]">
+                        <tr>
+                            <th class="py-2.5 px-4 w-24">Event</th>
+                            <th class="py-2.5 px-4">Action & Description</th>
+                            <th class="py-2.5 px-4 w-36">Target Entity</th>
+                            <th class="py-2.5 px-4 w-40">User</th>
+                            <th class="py-2.5 px-4 w-44">Date & Time</th>
+                            <th class="py-2.5 px-4 w-24 text-right">Details</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @foreach($activities as $activity)
+                    @foreach($activities as $activity)
                             @php
                                 $eventBadge = [
-                                    'created' => ['bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200', 'label' => 'Created', 'icon' => '➕'],
+                                    'created' => ['bg' => 'bg-green-50 text-green-700 border-green-200', 'label' => 'Created', 'icon' => '➕'],
                                     'updated' => ['bg' => 'bg-blue-50 text-blue-700 border-blue-200', 'label' => 'Updated', 'icon' => '✏️'],
-                                    'deleted' => ['bg' => 'bg-rose-50 text-rose-700 border-rose-200', 'label' => 'Deleted', 'icon' => '🗑️'],
+                                    'deleted' => ['bg' => 'bg-red-50 text-red-700 border-red-200', 'label' => 'Deleted', 'icon' => '🗑️'],
                                 ][$activity->event] ?? ['bg' => 'bg-gray-50 text-gray-700 border-gray-200', 'label' => ucfirst($activity->event), 'icon' => '📌'];
 
                                 $modelName = class_basename($activity->subject_type ?? 'Unknown');
                                 $oldProps = $activity->properties['old'] ?? [];
                                 $newProps = $activity->properties['attributes'] ?? [];
                                 $hasChanges = !empty($oldProps) || !empty($newProps);
+                                $canExpand = ($hasChanges && $activity->event === 'updated') || ($activity->event === 'created' && !empty($newProps)) || ($activity->event === 'deleted' && !empty($oldProps));
                             @endphp
 
                             <tbody x-data="{ open: false }" class="border-b border-gray-100 last:border-0">
                                 {{-- Main Log Row --}}
-                                <tr class="hover:bg-gray-50/70 transition-colors">
+                                <tr @if($canExpand) @click="open = !open" class="hover:bg-gray-50 transition-colors cursor-pointer" @else class="hover:bg-gray-50 transition-colors" @endif>
                                     {{-- Event Badge --}}
-                                    <td class="py-2 px-3.5 align-middle">
+                                    <td class="py-2 px-4 align-middle">
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border {{ $eventBadge['bg'] }}">
                                             <span>{{ $eventBadge['icon'] }}</span>
                                             <span>{{ $eventBadge['label'] }}</span>
@@ -118,19 +170,19 @@
                                     </td>
 
                                     {{-- Action Description --}}
-                                    <td class="py-2 px-3.5 align-middle font-medium text-gray-800 text-[12px]">
+                                    <td class="py-2 px-4 align-middle font-medium text-gray-800 text-[12px]">
                                         {{ $activity->description }}
                                     </td>
 
                                     {{-- Target Entity --}}
-                                    <td class="py-2 px-3.5 align-middle">
+                                    <td class="py-2 px-4 align-middle">
                                         <span class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-mono border border-gray-200">
                                             {{ $modelName }} #{{ $activity->subject_id }}
                                         </span>
                                     </td>
 
                                     {{-- Performed By User --}}
-                                    <td class="py-2 px-3.5 align-middle">
+                                    <td class="py-2 px-4 align-middle">
                                         @if($activity->causer)
                                             <div class="flex items-center gap-1.5 text-[11px]">
                                                 <span class="font-medium text-gray-700 truncate max-w-[100px]">{{ $activity->causer->name }}</span>
@@ -144,23 +196,29 @@
                                     </td>
 
                                     {{-- Date & Time --}}
-                                    <td class="py-2 px-3.5 align-middle text-[11px] text-gray-500 whitespace-nowrap">
+                                    <td class="py-2 px-4 align-middle text-[11px] text-gray-500 whitespace-nowrap">
                                         <span>{{ $activity->created_at->format('d M Y, h:i A') }}</span>
                                         <span class="text-gray-400 text-[10px] ml-1">({{ $activity->created_at->diffForHumans() }})</span>
                                     </td>
 
                                     {{-- Action / Expand Button --}}
-                                    <td class="py-2 px-3.5 align-middle text-right">
-                                        @if($hasChanges && $activity->event === 'updated')
-                                            <button @click="open = !open" 
+                                    <td class="py-2 px-4 align-middle text-right">
+                                        @if($canExpand && $activity->event === 'updated')
+                                            <button type="button" 
                                                     class="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded transition-colors">
-                                                <span x-text="open ? 'Close' : 'Diff ({{ count($oldProps) }})'"></span>
+                                                <span x-text="open ? 'Close' : 'More({{ count($oldProps) }})'"></span>
                                                 <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                             </button>
-                                        @elseif($activity->event === 'created' && !empty($newProps))
-                                            <button @click="open = !open" 
-                                                    class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded transition-colors">
-                                                <span x-text="open ? 'Close' : 'Details'"></span>
+                                        @elseif($canExpand && $activity->event === 'created')
+                                            <button type="button" 
+                                                    class="inline-flex items-center gap-1 text-[10px] font-semibold text-green-600 hover:text-green-800 bg-green-50 hover:bg-green-100 border border-green-200 px-2 py-0.5 rounded transition-colors">
+                                                <span x-text="open ? 'Close' : 'More'"></span>
+                                                <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                            </button>
+                                        @elseif($canExpand && $activity->event === 'deleted')
+                                            <button type="button" 
+                                                    class="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-0.5 rounded transition-colors">
+                                                <span x-text="open ? 'Close' : 'More'"></span>
                                                 <svg class="w-3 h-3 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                                             </button>
                                         @else
@@ -180,23 +238,28 @@
                                                             <tr class="bg-gray-100 text-gray-500 font-semibold border-b border-gray-200 text-[10px] uppercase">
                                                                 <th class="py-1.5 px-3 w-1/4">Field</th>
                                                                 <th class="py-1.5 px-3 w-[37.5%] text-red-700 bg-red-50/50">Old Value</th>
-                                                                <th class="py-1.5 px-3 w-[37.5%] text-emerald-700 bg-emerald-50/50">New Value</th>
+                                                                <th class="py-1.5 px-3 w-[37.5%] text-green-700 bg-green-50/50">New Value</th>
                                                             </tr>
                                                         </thead>
                                                         <tbody class="divide-y divide-gray-100 font-mono">
                                                             @foreach($oldProps as $field => $oldVal)
                                                                 @php
                                                                     $newVal = $newProps[$field] ?? '—';
-                                                                    if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password'])) continue;
-                                                                    $displayOld = is_array($oldVal) ? json_encode($oldVal, JSON_PRETTY_PRINT) : (string) $oldVal;
-                                                                    $displayNew = is_array($newVal) ? json_encode($newVal, JSON_PRETTY_PRINT) : (string) $newVal;
+                                                                    if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password', 'user_id'])) continue;
+                                                                    
+                                                                    $resolvedOld = resolveIdToName($field, $oldVal);
+                                                                    $resolvedNew = resolveIdToName($field, $newVal);
+                                                                    
+                                                                    $displayOld = $resolvedOld ?? (is_array($oldVal) ? json_encode($oldVal, JSON_PRETTY_PRINT) : (string) $oldVal);
+                                                                    $displayNew = $resolvedNew ?? (is_array($newVal) ? json_encode($newVal, JSON_PRETTY_PRINT) : (string) $newVal);
+                                                                    
                                                                     $displayOld = \Illuminate\Support\Str::limit($displayOld, 120);
                                                                     $displayNew = \Illuminate\Support\Str::limit($displayNew, 120);
                                                                 @endphp
                                                                 <tr>
                                                                     <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
                                                                     <td class="py-1 px-3 text-red-600 bg-red-50/30 break-all">{{ $displayOld ?: '—' }}</td>
-                                                                    <td class="py-1 px-3 text-emerald-600 bg-emerald-50/30 break-all">{{ $displayNew ?: '—' }}</td>
+                                                                    <td class="py-1 px-3 text-green-600 bg-green-50/30 break-all">{{ $displayNew ?: '—' }}</td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -204,21 +267,49 @@
                                                 @elseif($activity->event === 'created' && !empty($newProps))
                                                     <table class="w-full text-left text-[11px]">
                                                         <thead>
-                                                            <tr class="bg-emerald-50 text-emerald-800 font-semibold border-b border-emerald-100 text-[10px] uppercase">
+                                                            <tr class="bg-green-50 text-green-800 font-semibold border-b border-green-100 text-[10px] uppercase">
                                                                 <th class="py-1.5 px-3 w-1/3">Field</th>
                                                                 <th class="py-1.5 px-3 w-2/3">Value</th>
                                                             </tr>
                                                         </thead>
-                                                        <tbody class="divide-y divide-emerald-50 font-mono">
+                                                        <tbody class="divide-y divide-green-50 font-mono">
                                                             @foreach($newProps as $field => $val)
                                                                 @php
-                                                                    if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password'])) continue;
-                                                                    $display = is_array($val) ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val;
+                                                                    if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password', 'user_id'])) continue;
+                                                                    
+                                                                    $resolved = resolveIdToName($field, $val);
+                                                                    $display = $resolved ?? (is_array($val) ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
+                                                                    
                                                                     $display = \Illuminate\Support\Str::limit($display, 150);
                                                                 @endphp
                                                                 <tr>
                                                                     <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
-                                                                    <td class="py-1 px-3 text-emerald-700 break-all">{{ $display ?: '—' }}</td>
+                                                                    <td class="py-1 px-3 text-green-700 break-all">{{ $display ?: '—' }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                @elseif($activity->event === 'deleted' && !empty($oldProps))
+                                                    <table class="w-full text-left text-[11px]">
+                                                        <thead>
+                                                            <tr class="bg-red-50 text-red-800 font-semibold border-b border-red-100 text-[10px] uppercase">
+                                                                <th class="py-1.5 px-3 w-1/3">Field</th>
+                                                                <th class="py-1.5 px-3 w-2/3">Deleted Value</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-red-50 font-mono">
+                                                            @foreach($oldProps as $field => $val)
+                                                                @php
+                                                                    if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password', 'user_id'])) continue;
+                                                                    
+                                                                    $resolved = resolveIdToName($field, $val);
+                                                                    $display = $resolved ?? (is_array($val) ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
+                                                                    
+                                                                    $display = \Illuminate\Support\Str::limit($display, 150);
+                                                                @endphp
+                                                                <tr>
+                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
+                                                                    <td class="py-1 px-3 text-red-700 break-all">{{ $display ?: '—' }}</td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -230,7 +321,6 @@
                                 @endif
                             </tbody>
                         @endforeach
-                    </tbody>
                 </table>
             </div>
 

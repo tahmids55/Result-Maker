@@ -45,16 +45,23 @@ class ActivityLogController extends Controller
 
         $activities = $query->paginate(25)->withQueryString();
 
-        // Get unique model types for the filter dropdown (scoped to tenant activities)
-        $modelTypes = Activity::whereIn('causer_id', $tenantUserIds)
-            ->select('subject_type')
-            ->distinct()
-            ->whereNotNull('subject_type')
-            ->pluck('subject_type')
-            ->map(fn($type) => [
-                'full' => $type,
-                'short' => class_basename($type),
-            ]);
+        // Provide a hardcoded list of all tracked models for the filter dropdown
+        $trackedModels = [
+            'App\Models\Mark',
+            'App\Models\Student',
+            'App\Models\Subject',
+            'App\Models\Exam',
+            'App\Models\SchoolClass',
+            'App\Models\Section',
+            'App\Models\GradeConfig',
+            'App\Models\Result',
+            'App\Models\School',
+        ];
+
+        $modelTypes = collect($trackedModels)->map(fn($type) => [
+            'full' => $type,
+            'short' => class_basename($type),
+        ]);
 
         // Get unique causers (users) for the filter dropdown scoped to tenant
         $users = \App\Models\User::whereIn('id', $tenantUserIds)

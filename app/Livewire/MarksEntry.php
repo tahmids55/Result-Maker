@@ -196,12 +196,16 @@ class MarksEntry extends Component
 
             if (isset($item['value']) && $item['value'] === '') {
                 // The user cleared the input, so we should delete the mark
-                Mark::where('student_id', (int) $sid)
+                $marksToDelete = Mark::where('student_id', (int) $sid)
                     ->where('subject_id', (int) $subjId)
                     ->where('sub_subject_id', (int) $subId ?: null)
                     ->where('exam_id', $this->examId)
                     ->where('component', $comp)
-                    ->delete();
+                    ->get();
+                
+                foreach ($marksToDelete as $mark) {
+                    $mark->delete();
+                }
                 continue;
             }
 
