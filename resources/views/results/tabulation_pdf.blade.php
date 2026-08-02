@@ -52,13 +52,13 @@
             word-wrap: break-word;
         }
         table.tab thead th {
-            background-color: #dde3ea;
+            background-color: #bdcbdcff !important;
             font-weight: bold;
             font-size: {{ $fs['header'] }};
             padding: 2px 0;
         }
         .sh {
-            background-color: #c8d0da !important;
+            background-color: #bdcbdcff !important;
             font-weight: bold;
             font-size: {{ $fs['header'] }};
             overflow: hidden;
@@ -201,9 +201,10 @@
                             $sdMap[$sd['subject_id']] = $sd;
                         }
                     }
+                    $bg = $loop->even ? '#dfe3e8ff' : '#ffffff';
                 @endphp
 
-                <tr class="rm">
+                <tr class="rm" style="background-color: {{ $bg }};">
                     <td class="rb" rowspan="2">{{ $student->roll }}</td>
                     <td class="sn" rowspan="2">{{ $student->name }}</td>
                     @foreach($columnStructure as $cs)
@@ -236,7 +237,7 @@
                     <td class="tb" rowspan="2">{{ $result ? number_format($result->gpa, 2) : '' }}</td>
                     <td class="tb" rowspan="2">{{ $result ? $result->rank : '' }}</td>
                 </tr>
-                <tr class="rg">
+                <tr class="rg" style="background-color: {{ $bg }};">
                     @foreach($columnStructure as $cs)
                         @php
                             $sd = $sdMap[$cs['subject']->id] ?? null;
