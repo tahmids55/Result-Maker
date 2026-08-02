@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Mark extends Model
 {
     use \App\Traits\BelongsToUser;
+    use \App\Traits\LogsActivityTrait;
 
     use HasFactory;
 
@@ -54,5 +55,12 @@ class Mark extends Model
     {
         if ($this->full_marks == 0) return 0;
         return round(($this->obtained_marks / $this->full_marks) * 100, 2);
+    }
+
+    protected function getActivityLabel(): string
+    {
+        $studentName = $this->student?->name ?? 'Student#' . $this->student_id;
+        $subjectName = $this->subSubject?->name ?? $this->subject?->name ?? 'Unknown Subject';
+        return "{$studentName} - {$subjectName} ({$this->component})";
     }
 }

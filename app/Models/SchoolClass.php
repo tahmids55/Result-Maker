@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class SchoolClass extends Model
 {
     use \App\Traits\BelongsToUser;
+    use \App\Traits\LogsActivityTrait;
 
     use HasFactory;
 

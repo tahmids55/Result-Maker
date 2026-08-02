@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Result extends Model
 {
     use \App\Traits\BelongsToUser;
+    use \App\Traits\LogsActivityTrait;
 
     use HasFactory;
 
@@ -49,5 +50,11 @@ class Result extends Model
             'D'     => 'bg-orange-400',
             default => 'bg-red-500',
         };
+    }
+
+    protected function getActivityLabel(): string
+    {
+        $studentName = $this->student?->name ?? 'Student#' . $this->student_id;
+        return $studentName;
     }
 }

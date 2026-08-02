@@ -15,6 +15,7 @@ use App\Http\Controllers\SmsController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\ActivityLogController;
 use Illuminate\Support\Facades\Route;
 
 // ── Authentication ──────────────────────────────────────────────────────────
@@ -128,5 +129,8 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
         // Teacher Management
         Route::resource('teachers', TeacherController::class)->except(['show']);
+
+        // Activity History / Audit Log
+        Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
     });
 });

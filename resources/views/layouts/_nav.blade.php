@@ -21,6 +21,7 @@
                 ['route' => 'sms.index',       'icon' => '💬', 'label' => 'SMS/WhatsApp'],
                 ['route' => 'teachers.index',  'icon' => '👨‍🏫', 'label' => 'Teachers'],
                 ['route' => 'settings.index',  'icon' => '⚙️', 'label' => 'Settings'],
+                ['route' => 'activity-log.index', 'icon' => '📜', 'label' => 'History'],
             ];
         } else {
             // Teacher navigation — only marks entry and results

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Section extends Model
 {
     use \App\Traits\BelongsToUser;
+    use \App\Traits\LogsActivityTrait;
 
     use HasFactory;
 
