@@ -52,6 +52,7 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
     Route::post('results/recalculate', [ResultController::class, 'recalculate'])->name('results.recalculate');
     Route::post('results/merit', [ResultController::class, 'meritList'])->name('results.merit');
     Route::post('results/export', [ResultController::class, 'exportExcel'])->name('results.export');
+    Route::post('results/tabulation', [ResultController::class, 'tabulationSheet'])->name('results.tabulation');
     Route::get('results/{student}/{exam}', [ResultController::class, 'studentResult'])->name('results.student');
 
     // API used by dropdowns (shared)

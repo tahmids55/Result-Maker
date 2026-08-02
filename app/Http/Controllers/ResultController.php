@@ -185,4 +185,57 @@ class ResultController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    public function tabulationSheet(Request $request)
+    {
+        $request->validate([
+            'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
+        ]);
+
+        $exam    = Exam::findOrFail($request->exam_id);
+        $class   = SchoolClass::findOrFail($request->class_id);
+        $section = Section::findOrFail($request->section_id);
+        $perPage = 10;
+
+        $studentIds = Student::where('class_id', $request->class_id)
+            ->where('section_id', $request->section_id)
+            ->orderBy('roll')
+            ->pluck('id');
+
+        $students = Student::whereIn('id', $studentIds)->orderBy('roll')->get();
+
+        $results = Result::with('student')
+            ->whereIn('student_id', $studentIds)
+            ->where('exam_id', $exam->id)
+            ->get()
+            ->keyBy('student_id');
+
+        $subjects = \App\Models\Subject::with('subSubjects')
+            ->where('class_id', $class->id)
+            ->where('section_id', $section->id)
+            ->orderBy('sort_order')
+            ->get();
+
+        $school = \App\Models\School::first();
+
+        // Break students into chunks based on per_page
+        $chunks = $students->chunk($perPage);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('results.tabulation_pdf', compact(
+            'chunks', 'results', 'exam', 'class', 'section', 'subjects', 'school'
+        ))
+        ->setPaper('a4', 'landscape')
+        ->setOption('defaultFont', 'Helvetica')
+        ->setOption('isFontSubsettingEnabled', true)
+        ->setOption('margin_top', 0)
+        ->setOption('margin_bottom', 0)
+        ->setOption('margin_left', 0)
+        ->setOption('margin_right', 0);
+
+        $filename = "Tabulation_Sheet_{$class->name}_{$section->name}.pdf";
+        $filename = str_replace(['/', '\\'], '_', $filename);
+        return $pdf->stream($filename);
+    }
 }

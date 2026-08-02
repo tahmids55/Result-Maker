@@ -50,32 +50,34 @@
         </form>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {{-- Merit List --}}
         @if(auth()->user()->isAdmin())
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Merit List</h3>
-            <form method="POST" action="{{ route('results.merit') }}" class="space-y-3">
-                @csrf
-                <select name="class_id" required onchange="fetchSections(this.value, this)"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Class --</option>
-                    @foreach($classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
-                <select name="section_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Section --</option>
-                </select>
-                <select name="exam_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Exam --</option>
-                    @foreach($exams as $exam)
-                        <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+            <form method="POST" action="{{ route('results.merit') }}" class="space-y-3 flex-grow flex flex-col justify-between">
+                <div>
+                    @csrf
+                    <select name="class_id" required onchange="fetchSections(this.value, this)"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                        <option value="">-- Class --</option>
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                    <select name="section_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                        <option value="">-- Section --</option>
+                    </select>
+                    <select name="exam_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">-- Exam --</option>
+                        @foreach($exams as $exam)
+                            <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors mt-3">
                     🏅 View Merit List
                 </button>
             </form>
@@ -84,30 +86,65 @@
 
         {{-- Export --}}
         @if(auth()->user()->isAdmin())
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
             <h3 class="text-sm font-semibold text-gray-700 mb-3">Export to CSV</h3>
-            <form method="POST" action="{{ route('results.export') }}" class="space-y-3">
-                @csrf
-                <select name="class_id" required onchange="fetchSections(this.value, this)"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Class --</option>
-                    @foreach($classes as $class)
-                        <option value="{{ $class->id }}">{{ $class->name }}</option>
-                    @endforeach
-                </select>
-                <select name="section_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Section --</option>
-                </select>
-                <select name="exam_id" required
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">-- Exam --</option>
-                    @foreach($exams as $exam)
-                        <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors">
+            <form method="POST" action="{{ route('results.export') }}" class="space-y-3 flex-grow flex flex-col justify-between">
+                <div>
+                    @csrf
+                    <select name="class_id" required onchange="fetchSections(this.value, this)"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                        <option value="">-- Class --</option>
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                    <select name="section_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
+                        <option value="">-- Section --</option>
+                    </select>
+                    <select name="exam_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="">-- Exam --</option>
+                        @foreach($exams as $exam)
+                            <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold py-2 rounded-lg transition-colors mt-3">
                     ⬇ Download CSV
+                </button>
+            </form>
+        </div>
+        @endif
+
+        {{-- Tabulation Sheet --}}
+        @if(auth()->user()->isAdmin())
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Tabulation Sheet</h3>
+            <form method="POST" action="{{ route('results.tabulation') }}" target="_blank" class="space-y-2 flex-grow flex flex-col justify-between">
+                <div>
+                    @csrf
+                    <select name="class_id" required onchange="fetchSections(this.value, this)"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
+                        <option value="">-- Class --</option>
+                        @foreach($classes as $class)
+                            <option value="{{ $class->id }}">{{ $class->name }}</option>
+                        @endforeach
+                    </select>
+                    <select name="section_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
+                        <option value="">-- Section --</option>
+                    </select>
+                    <select name="exam_id" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
+                        <option value="">-- Exam --</option>
+                        @foreach($exams as $exam)
+                            <option value="{{ $exam->id }}">{{ $exam->name }} {{ $exam->year }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold py-2 rounded-lg transition-colors mt-3">
+                    📑 Generate PDF
                 </button>
             </form>
         </div>
