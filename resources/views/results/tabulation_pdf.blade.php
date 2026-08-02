@@ -7,7 +7,8 @@
         $studentCount = $chunks->first() ? $chunks->first()->count() : 4;
         
         $fontSizes = [
-            10 => ['cell' => '8pt', 'header' => '7pt','name' => '7pt',  'school' => '12pt', 'title' => '10pt', 'padMarks' => '7px', 'padGrade' => '6px'],
+            10 => ['cell' => '8pt', 'header' => '7pt', 'name' => '7pt', 'school' => '12pt', 'title' => '10pt', 'padMarks' => '7px', 'padGrade' => '6px'],
+            8  => ['cell' => '8.5pt', 'header' => '7.5pt', 'name' => '8pt', 'school' => '13pt', 'title' => '11pt', 'padMarks' => '10px', 'padGrade' => '9px'],
         ];
         $fs = $fontSizes[$studentCount] ?? $fontSizes[10];
     @endphp
@@ -21,7 +22,7 @@
         body { 
             font-family: 'Helvetica', 'Arial', sans-serif; 
             font-size: {{ $fs['cell'] }}; 
-            margin: 0 10px;
+            margin: 0 3px;
             padding: 0;
         }
         
@@ -78,8 +79,8 @@
             padding-left: 2mm !important;
             padding-right: 1mm !important;
             overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+            word-wrap: break-word;
+            line-height: 1.1;
         }
         .rb { font-weight: bold; }
         .tb { font-weight: bold; }
@@ -124,9 +125,9 @@
     }
     
     // Use percentages for widths to ensure dompdf strictly respects the layout
-    // Roll: 3%, Total: 3.5%, GPA: 3.5%, Pos: 3%, Name: 17%
-    // Total fixed = 30%
-    $fixedPct = 30;
+    // Roll: 3%, Total: 3.5%, GPA: 3.5%, Pos: 3%, Name: 14%
+    // Total fixed = 27%
+    $fixedPct = 27;
     $remainingPct = 100 - $fixedPct;
     $colPct = $dataColCount > 0 ? ($remainingPct / $dataColCount) : 2;
 @endphp
@@ -156,7 +157,7 @@
         <thead>
             <tr>
                 <th rowspan="3" style="width: 3%;">Sl</th>
-                <th rowspan="3" style="width: 17%; text-align:left; padding-left:2mm;">Student Name</th>
+                <th rowspan="3" style="width: 14%; text-align:left; padding-left:2mm;">Student Name</th>
                 @foreach($columnStructure as $cs)
                     @php
                         $sn = $cs['subject']->name;

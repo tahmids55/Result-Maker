@@ -197,7 +197,7 @@ class ResultController extends Controller
         $exam    = Exam::findOrFail($request->exam_id);
         $class   = SchoolClass::findOrFail($request->class_id);
         $section = Section::findOrFail($request->section_id);
-        $perPage = 10;
+
 
         $studentIds = Student::where('class_id', $request->class_id)
             ->where('section_id', $request->section_id)
@@ -220,6 +220,9 @@ class ResultController extends Controller
 
         $school = \App\Models\School::first();
 
+        // Dynamically adjust students per page based on subject count to avoid clutter
+        $perPage = $subjects->count() >= 9 ? 8 : 10;
+        
         // Break students into chunks based on per_page
         $chunks = $students->chunk($perPage);
 
