@@ -236,6 +236,6 @@ class ResultController extends Controller
 
         $filename = "Tabulation_Sheet_{$class->name}_{$section->name}.pdf";
         $filename = str_replace(['/', '\\'], '_', $filename);
-        return $pdf->stream($filename);
+        return $pdf->download($filename);
     }
 }
