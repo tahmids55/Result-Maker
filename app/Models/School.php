@@ -25,6 +25,7 @@ class School extends Model
         'sms_api_key',
         'whatsapp_api_key',
         'auto_save_marks',
+        'merit_calculation_type',
     ];
 
     /**

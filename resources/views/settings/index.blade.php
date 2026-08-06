@@ -187,6 +187,15 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="mt-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Merit Position Calculation</label>
+                    <select name="merit_calculation_type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                        <option value="individual" {{ ($school?->merit_calculation_type ?? 'individual') === 'individual' ? 'selected' : '' }}>Individual (Calculate per section)</option>
+                        <option value="combined" {{ ($school?->merit_calculation_type) === 'combined' ? 'selected' : '' }}>Combined (Calculate across whole class)</option>
+                    </select>
+                </div>
+
                 <div class="mt-6">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg text-sm transition-colors">
                         Save Settings

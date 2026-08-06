@@ -2,6 +2,9 @@
 @section('title', 'Results')
 
 @section('content')
+@php
+    $isCombined = \App\Models\School::getSettings()?->merit_calculation_type === 'combined';
+@endphp
 <div class="py-4 space-y-4">
 
     {{-- Selector --}}
@@ -16,9 +19,9 @@
                     <option value="{{ $class->id }}">{{ $class->name }}</option>
                 @endforeach
             </select>
-            <select name="section_id" id="section_id" required onchange="filterSubjects(this.value, this)"
+            <select name="section_id" id="section_id" {{ $isCombined ? '' : 'required' }} onchange="filterSubjects(this.value, this)"
                     class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="">-- Section --</option>
+                <option value="">-- Section {{ $isCombined ? '(All) ' : '' }}--</option>
             </select>
             @if(auth()->user()->isTeacher())
             <select name="subject_id"
@@ -65,9 +68,9 @@
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                         @endforeach
                     </select>
-                    <select name="section_id" required
+                    <select name="section_id" {{ $isCombined ? '' : 'required' }}
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
-                        <option value="">-- Section --</option>
+                        <option value="">-- Section {{ $isCombined ? '(All) ' : '' }}--</option>
                     </select>
                     <select name="exam_id" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -98,9 +101,9 @@
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                         @endforeach
                     </select>
-                    <select name="section_id" required
+                    <select name="section_id" {{ $isCombined ? '' : 'required' }}
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-3">
-                        <option value="">-- Section --</option>
+                        <option value="">-- Section {{ $isCombined ? '(All) ' : '' }}--</option>
                     </select>
                     <select name="exam_id" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
@@ -131,9 +134,9 @@
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                         @endforeach
                     </select>
-                    <select name="section_id" required
+                    <select name="section_id" {{ $isCombined ? '' : 'required' }}
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
-                        <option value="">-- Section --</option>
+                        <option value="">-- Section {{ $isCombined ? '(All) ' : '' }}--</option>
                     </select>
                     <select name="exam_id" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
@@ -172,6 +175,8 @@
 
 @push('scripts')
 <script>
+const isCombined = @json($isCombined);
+
 function fetchSections(classId, element) {
     const form = element.closest('form');
     if (!form) return;
@@ -180,13 +185,13 @@ function fetchSections(classId, element) {
 
     sel.innerHTML = '<option value="">Loading...</option>';
     if (!classId) { 
-        sel.innerHTML = '<option value="">-- Section --</option>'; 
+        sel.innerHTML = `<option value="">-- Section ${isCombined ? '(All) ' : ''}--</option>`; 
         return; 
     }
     fetch(`/api/sections-by-class?class_id=${classId}`)
         .then(r => r.json())
         .then(data => {
-            sel.innerHTML = '<option value="">-- Section --</option>';
+            sel.innerHTML = `<option value="">-- Section ${isCombined ? '(All) ' : ''}--</option>`;
             data.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
             
             // Also trigger subject filter if subject dropdown exists

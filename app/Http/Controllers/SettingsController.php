@@ -51,8 +51,13 @@ class SettingsController extends Controller
 
     public function updateGeneral(Request $request)
     {
+        $request->validate([
+            'merit_calculation_type' => 'required|in:individual,combined',
+        ]);
+
         $school = School::firstOrNew();
         $school->auto_save_marks = $request->has('auto_save_marks');
+        $school->merit_calculation_type = $request->input('merit_calculation_type', 'individual');
         $school->save();
 
         return back()->with('success', 'General settings saved.');

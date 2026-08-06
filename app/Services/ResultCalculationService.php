@@ -257,17 +257,24 @@ class ResultCalculationService
     /**
      * Calculate results for all students in a class-section for an exam, then rank them.
      */
-    public function calculateForClass(int $classId, int $sectionId, Exam $exam): Collection
+    public function calculateForClass(int $classId, ?int $sectionId, Exam $exam)
     {
-        $students = Student::where('class_id', $classId)
-            ->where('section_id', $sectionId)
-            ->orderBy('roll')
-            ->get();
+        $query = Student::where('class_id', $classId)->orderBy('roll');
+        if ($sectionId) {
+            $query->where('section_id', $sectionId);
+        }
+        $students = $query->get();
 
         $results = $students->map(fn($s) => $this->calculateForStudent($s, $exam));
 
-        // Assign ranks
-        $this->assignRanks($exam->id, $classId, $sectionId);
+        // Assign ranks based on the school setting
+        $setting = \App\Models\School::getSettings()?->merit_calculation_type ?? 'individual';
+        
+        if ($setting === 'combined') {
+            $this->assignRanks($exam->id, $classId, null);
+        } else {
+            $this->assignRanks($exam->id, $classId, $sectionId);
+        }
 
         return $results;
     }
@@ -275,11 +282,13 @@ class ResultCalculationService
     /**
      * Assign merit ranks within a class-section for an exam.
      */
-    public function assignRanks(int $examId, int $classId, int $sectionId): void
+    public function assignRanks(int $examId, int $classId, ?int $sectionId = null): void
     {
-        $studentIds = Student::where('class_id', $classId)
-            ->where('section_id', $sectionId)
-            ->pluck('id');
+        $query = Student::where('class_id', $classId);
+        if ($sectionId) {
+            $query->where('section_id', $sectionId);
+        }
+        $studentIds = $query->pluck('id');
 
         $results = Result::whereIn('student_id', $studentIds)
             ->where('exam_id', $examId)
@@ -299,15 +308,29 @@ class ResultCalculationService
      */
     public function updateRanksForExam(Exam $exam): void
     {
-        // Get all unique class/section combinations for this exam's results
-        $combinations = Result::where('exam_id', $exam->id)
-            ->join('students', 'results.student_id', '=', 'students.id')
-            ->select('students.class_id', 'students.section_id')
-            ->distinct()
-            ->get();
-            
-        foreach ($combinations as $combo) {
-            $this->assignRanks($exam->id, $combo->class_id, $combo->section_id);
+        $setting = \App\Models\School::getSettings()?->merit_calculation_type ?? 'individual';
+
+        if ($setting === 'combined') {
+            $classes = Result::where('exam_id', $exam->id)
+                ->join('students', 'results.student_id', '=', 'students.id')
+                ->select('students.class_id')
+                ->distinct()
+                ->pluck('class_id');
+                
+            foreach ($classes as $classId) {
+                $this->assignRanks($exam->id, $classId, null);
+            }
+        } else {
+            // Get all unique class/section combinations for this exam's results
+            $combinations = Result::where('exam_id', $exam->id)
+                ->join('students', 'results.student_id', '=', 'students.id')
+                ->select('students.class_id', 'students.section_id')
+                ->distinct()
+                ->get();
+                
+            foreach ($combinations as $combo) {
+                $this->assignRanks($exam->id, $combo->class_id, $combo->section_id);
+            }
         }
     }
 

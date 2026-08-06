@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Merit List – ' . $class->name . ' ' . $section->name)
+@section('title', 'Merit List – ' . $class->name . ' ' . ($section ? $section->name : '(All Sections)'))
 
 @section('content')
 <div class="py-4 space-y-4">
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-lg font-bold text-gray-900">Merit List</h2>
-            <p class="text-sm text-gray-500">{{ $class->name }} – Section {{ $section->name }} · {{ $exam->name }} {{ $exam->year }}</p>
+            <p class="text-sm text-gray-500">{{ $class->name }} – Section {{ $section ? $section->name : '(All Sections)' }} · {{ $exam->name }} {{ $exam->year }}</p>
         </div>
         <a href="{{ route('results.index') }}" class="border border-gray-300 text-gray-600 hover:bg-gray-50 text-sm px-4 py-2 rounded-lg transition-colors">← Back</a>
     </div>
@@ -22,6 +22,7 @@
                     <th class="px-4 py-3 text-center font-semibold text-gray-600 w-16">Position</th>
                     <th class="px-4 py-3 text-left font-semibold text-gray-600">Roll</th>
                     <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
+                    <th class="px-4 py-3 text-left font-semibold text-gray-600">Section</th>
                     <th class="px-4 py-3 text-center font-semibold text-gray-600">Marks</th>
                     <th class="px-4 py-3 text-center font-semibold text-gray-600">%</th>
                     <th class="px-4 py-3 text-center font-semibold text-gray-600">GPA</th>
@@ -41,6 +42,7 @@
                     </td>
                     <td class="px-4 py-3 font-mono text-gray-600 font-medium">{{ $result->student->roll }}</td>
                     <td class="px-4 py-3 font-semibold text-gray-900">{{ $result->student->name }}</td>
+                    <td class="px-4 py-3 text-xs text-gray-600">{{ $result->student->section->name ?? '-' }}</td>
                     <td class="px-4 py-3 text-center font-bold text-gray-800">
                         {{ $result->total_marks }}<span class="text-gray-400 font-normal text-xs">/{{ $result->full_marks }}</span>
                     </td>

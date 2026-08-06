@@ -29,20 +29,22 @@ class ResultController extends Controller
     {
         $request->validate([
             'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['nullable', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
             'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
             'subject_id' => ['nullable', \Illuminate\Validation\Rule::exists('subjects', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
         $class   = SchoolClass::findOrFail($request->class_id);
-        $section = Section::findOrFail($request->section_id);
+        $section = $request->section_id ? Section::findOrFail($request->section_id) : null;
 
-        $studentIds = Student::where('class_id', $request->class_id)
-            ->where('section_id', $request->section_id)
-            ->pluck('id');
+        $studentQuery = Student::where('class_id', $request->class_id);
+        if ($request->section_id) {
+            $studentQuery->where('section_id', $request->section_id);
+        }
+        $studentIds = $studentQuery->pluck('id');
 
-        $results = Result::with('student')
+        $results = Result::with('student.section')
             ->whereIn('student_id', $studentIds)
             ->where('exam_id', $exam->id)
             ->orderBy('rank')
@@ -85,14 +87,14 @@ class ResultController extends Controller
     {
         $request->validate([
             'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['nullable', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
             'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam = Exam::findOrFail($request->exam_id);
         $this->calculator->calculateForClass(
             $request->class_id,
-            $request->section_id,
+            $request->section_id, // can be null
             $exam
         );
 
@@ -112,19 +114,21 @@ class ResultController extends Controller
     {
         $request->validate([
             'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['nullable', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
             'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
         $class   = SchoolClass::findOrFail($request->class_id);
-        $section = Section::findOrFail($request->section_id);
+        $section = $request->section_id ? Section::findOrFail($request->section_id) : null;
 
-        $studentIds = Student::where('class_id', $request->class_id)
-            ->where('section_id', $request->section_id)
-            ->pluck('id');
+        $studentQuery = Student::where('class_id', $request->class_id);
+        if ($request->section_id) {
+            $studentQuery->where('section_id', $request->section_id);
+        }
+        $studentIds = $studentQuery->pluck('id');
 
-        $results = Result::with('student')
+        $results = Result::with('student.section')
             ->whereIn('student_id', $studentIds)
             ->where('exam_id', $exam->id)
             ->orderBy('rank')
@@ -137,26 +141,29 @@ class ResultController extends Controller
     {
         $request->validate([
             'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['nullable', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
             'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
         $class   = SchoolClass::findOrFail($request->class_id);
-        $section = Section::findOrFail($request->section_id);
+        $section = $request->section_id ? Section::findOrFail($request->section_id) : null;
 
-        $studentIds = Student::where('class_id', $request->class_id)
-            ->where('section_id', $request->section_id)
-            ->pluck('id');
+        $studentQuery = Student::where('class_id', $request->class_id);
+        if ($request->section_id) {
+            $studentQuery->where('section_id', $request->section_id);
+        }
+        $studentIds = $studentQuery->pluck('id');
 
-        $results = Result::with('student')
+        $results = Result::with('student.section')
             ->whereIn('student_id', $studentIds)
             ->where('exam_id', $exam->id)
             ->orderBy('rank')
             ->get();
 
         // Build CSV response
-        $filename = "results_{$class->name}_{$section->name}_{$exam->name}_{$exam->year}.csv";
+        $sectionName = $section ? $section->name : 'All_Sections';
+        $filename = "results_{$class->name}_{$sectionName}_{$exam->name}_{$exam->year}.csv";
         $headers  = [
             'Content-Type'        => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -164,19 +171,19 @@ class ResultController extends Controller
 
         $callback = function () use ($results) {
             $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Rank', 'Roll', 'Name', 'Total', 'Full', 'Percentage', 'GPA', 'Grade', 'Division', 'Status']);
+            fputcsv($handle, ['Rank', 'Roll', 'Name', 'Section', 'Total', 'Full', 'Percentage', 'GPA', 'Grade', 'Status']);
 
             foreach ($results as $r) {
                 fputcsv($handle, [
                     $r->rank,
                     $r->student->roll,
                     $r->student->name,
+                    $r->student->section->name ?? '-',
                     $r->total_marks,
                     $r->full_marks,
                     number_format($r->percentage, 2),
                     number_format($r->gpa, 2),
                     $r->grade,
-                    $r->division,
                     $r->is_passed ? 'Pass' : 'Fail',
                 ]);
             }
@@ -190,33 +197,37 @@ class ResultController extends Controller
     {
         $request->validate([
             'class_id'   => ['required', \Illuminate\Validation\Rule::exists('classes', 'id')->where('user_id', auth()->user()->owner_id)],
-            'section_id' => ['required', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
+            'section_id' => ['nullable', \Illuminate\Validation\Rule::exists('sections', 'id')->where('user_id', auth()->user()->owner_id)],
             'exam_id'    => ['required', \Illuminate\Validation\Rule::exists('exams', 'id')->where('user_id', auth()->user()->owner_id)],
         ]);
 
         $exam    = Exam::findOrFail($request->exam_id);
         $class   = SchoolClass::findOrFail($request->class_id);
-        $section = Section::findOrFail($request->section_id);
+        $section = $request->section_id ? Section::findOrFail($request->section_id) : null;
 
-
-        $studentIds = Student::where('class_id', $request->class_id)
-            ->where('section_id', $request->section_id)
-            ->orderBy('roll')
-            ->pluck('id');
-
+        $studentQuery = Student::where('class_id', $request->class_id)->orderBy('roll');
+        if ($request->section_id) {
+            $studentQuery->where('section_id', $request->section_id);
+        }
+        $studentIds = $studentQuery->pluck('id');
         $students = Student::whereIn('id', $studentIds)->orderBy('roll')->get();
 
-        $results = Result::with('student')
+        $results = Result::with('student.section')
             ->whereIn('student_id', $studentIds)
             ->where('exam_id', $exam->id)
             ->get()
             ->keyBy('student_id');
 
-        $subjects = \App\Models\Subject::with('subSubjects')
-            ->where('class_id', $class->id)
-            ->where('section_id', $section->id)
-            ->orderBy('sort_order')
-            ->get();
+        $subjectsQuery = \App\Models\Subject::with('subSubjects')->where('class_id', $class->id)->orderBy('sort_order');
+        if ($section) {
+            $subjectsQuery->where('section_id', $section->id);
+        } else {
+            $firstSectionId = Section::where('class_id', $class->id)->value('id');
+            if ($firstSectionId) {
+                $subjectsQuery->where('section_id', $firstSectionId);
+            }
+        }
+        $subjects = $subjectsQuery->get();
 
         $school = \App\Models\School::first();
 
@@ -237,7 +248,8 @@ class ResultController extends Controller
         ->setOption('margin_left', 10)
         ->setOption('margin_right', 10);
 
-        $filename = "Tabulation_Sheet_{$class->name}_{$section->name}.pdf";
+        $sectionName = $section ? $section->name : 'All_Sections';
+        $filename = "Tabulation_Sheet_{$class->name}_{$sectionName}.pdf";
         $filename = str_replace(['/', '\\'], '_', $filename);
         return $pdf->download($filename);
     }

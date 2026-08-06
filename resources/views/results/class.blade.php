@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Class Result – ' . $class->name . ' ' . $section->name)
+@section('title', 'Class Result – ' . $class->name . ' ' . ($section ? $section->name : '(All Sections)'))
 
 @section('content')
 <div class="py-4 space-y-4">
@@ -7,7 +7,7 @@
     {{-- Header --}}
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-            <h2 class="text-lg font-bold text-gray-900">{{ $class->name }} – Section {{ $section->name }}</h2>
+            <h2 class="text-lg font-bold text-gray-900">{{ $class->name }} – Section {{ $section ? $section->name : '(All Sections)' }}</h2>
             <p class="text-sm text-gray-500">{{ $exam->name }} {{ $exam->year }}</p>
         </div>
         <div class="flex gap-2">
@@ -18,7 +18,7 @@
             <form method="POST" action="{{ route('results.export') }}" class="inline">
                 @csrf
                 <input type="hidden" name="class_id" value="{{ $class->id }}">
-                <input type="hidden" name="section_id" value="{{ $section->id }}">
+                <input type="hidden" name="section_id" value="{{ $section?->id }}">
                 <input type="hidden" name="exam_id" value="{{ $exam->id }}">
                 <button class="text-sm bg-orange-500 hover:bg-orange-600 text-white font-medium px-4 py-2 rounded-lg transition-colors">
                     ⬇ Export CSV
@@ -134,12 +134,12 @@
                         @endif
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Roll</th>
                         <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
+                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Section</th>
                         @if(auth()->user()->isAdmin())
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">Total</th>
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">%</th>
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">GPA</th>
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">Grade</th>
-                            <th class="px-4 py-3 text-center font-semibold text-gray-600">Division</th>
                             <th class="px-4 py-3 text-center font-semibold text-gray-600">Status</th>
                         @elseif(isset($teacherSubject))
                             @foreach($componentKeys as $comp)
@@ -166,6 +166,7 @@
                         @endif
                         <td class="px-4 py-3 font-mono text-gray-700">{{ $result->student->roll }}</td>
                         <td class="px-4 py-3 font-medium text-gray-900">{{ $result->student->name }}</td>
+                        <td class="px-4 py-3 text-xs text-gray-600">{{ $result->student->section->name ?? '-' }}</td>
                         @if(auth()->user()->isAdmin())
                             <td class="px-4 py-3 text-center font-semibold text-gray-800">
                                 {{ $result->total_marks }}<span class="text-gray-400 font-normal">/{{ $result->full_marks }}</span>
@@ -177,7 +178,6 @@
                                     {{ $result->grade }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center text-xs text-gray-600">{{ $result->division }}</td>
                             <td class="px-4 py-3 text-center">
                                 <span class="px-2 py-0.5 rounded-full text-xs font-semibold
                                     {{ $result->is_passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
