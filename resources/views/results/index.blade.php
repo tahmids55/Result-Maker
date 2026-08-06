@@ -134,9 +134,9 @@
                             <option value="{{ $class->id }}">{{ $class->name }}</option>
                         @endforeach
                     </select>
-                    <select name="section_id" {{ $isCombined ? '' : 'required' }}
+                    <select name="section_id" required data-strict="true"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
-                        <option value="">-- Section {{ $isCombined ? '(All) ' : '' }}--</option>
+                        <option value="">-- Section --</option>
                     </select>
                     <select name="exam_id" required
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none mb-2">
@@ -183,15 +183,18 @@ function fetchSections(classId, element) {
     const sel = form.querySelector('[name="section_id"]');
     if (!sel) return;
 
+    const isStrict = sel.hasAttribute('data-strict');
+    const label = (isCombined && !isStrict) ? '-- Section (All) --' : '-- Section --';
+
     sel.innerHTML = '<option value="">Loading...</option>';
     if (!classId) { 
-        sel.innerHTML = `<option value="">-- Section ${isCombined ? '(All) ' : ''}--</option>`; 
+        sel.innerHTML = `<option value="">${label}</option>`; 
         return; 
     }
     fetch(`/api/sections-by-class?class_id=${classId}`)
         .then(r => r.json())
         .then(data => {
-            sel.innerHTML = `<option value="">-- Section ${isCombined ? '(All) ' : ''}--</option>`;
+            sel.innerHTML = `<option value="">${label}</option>`;
             data.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
             
             // Also trigger subject filter if subject dropdown exists

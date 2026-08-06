@@ -109,7 +109,7 @@
                 $comps = $sub->exam_components ?? [];
                 foreach ($comps as $compName => $compConfig) {
                     $compPrefix = strtoupper(substr($compName, 0, 2));
-                    $cols[] = ['type' => 'comp', 'sub_id' => $sub->id, 'comp' => $compName, 'label' => "{$compPrefix} ({$subjectInit}{$subIdx})"];
+                    $cols[] = ['type' => 'comp', 'sub_id' => $sub->id, 'sub_name' => $sub->name, 'comp' => $compName, 'label' => "{$compPrefix} ({$subjectInit}{$subIdx})"];
                 }
                 $subIdx++;
             }
@@ -149,7 +149,7 @@
         <tr>
             <td style="text-align:left;">EXAMINATION: {{ strtoupper($exam->name) }} {{ $exam->year }}</td>
             <td style="text-align:center;">CLASS: {{ strtoupper($class->name) }}</td>
-            <td style="text-align:right;">SECTION: {{ strtoupper($section->name) }}</td>
+            <td style="text-align:right;">SECTION: {{ strtoupper($section ? $section->name : '(ALL SECTIONS)') }}</td>
         </tr>
     </table>
 
@@ -198,7 +198,7 @@
                     $sdMap = [];
                     if ($result && $result->subject_details) {
                         foreach ($result->subject_details as $sd) {
-                            $sdMap[$sd['subject_id']] = $sd;
+                            $sdMap[$sd['subject_name']] = $sd;
                         }
                     }
                     $bg = $loop->even ? '#dfe3e8ff' : '#ffffff';
@@ -208,7 +208,7 @@
                     <td class="rb" rowspan="2">{{ $student->roll }}</td>
                     <td class="sn" rowspan="2">{{ $student->name }}</td>
                     @foreach($columnStructure as $cs)
-                        @php $sd = $sdMap[$cs['subject']->id] ?? null; @endphp
+                        @php $sd = $sdMap[$cs['subject']->name] ?? null; @endphp
                         @foreach($cs['cols'] as $col)
                             @if($col['type'] === 'total')
                                 <td class="tb">{{ $sd ? round($sd['obtained']) : '' }}</td>
@@ -218,7 +218,7 @@
                                     if ($sd) {
                                         if (!empty($sd['sub_subjects'])) {
                                             foreach ($sd['sub_subjects'] as $ssD) {
-                                                if (($ssD['sub_subject_id'] ?? null) == $col['sub_id'] && isset($ssD['components'][$col['comp']])) {
+                                                if (($ssD['name'] ?? null) == ($col['sub_name'] ?? null) && isset($ssD['components'][$col['comp']])) {
                                                     $cd = $ssD['components'][$col['comp']];
                                                     $val = is_array($cd) ? ($cd['obtained'] ?? '') : $cd;
                                                 }
@@ -240,7 +240,7 @@
                 <tr class="rg" style="background-color: {{ $bg }};">
                     @foreach($columnStructure as $cs)
                         @php
-                            $sd = $sdMap[$cs['subject']->id] ?? null;
+                            $sd = $sdMap[$cs['subject']->name] ?? null;
                             $grade = $sd ? $sd['grade'] : '';
                             $isFail = $sd && !$sd['is_passed'] && !$cs['subject']->is_optional;
                         @endphp
