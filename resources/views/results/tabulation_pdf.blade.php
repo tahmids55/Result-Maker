@@ -7,8 +7,8 @@
         $studentCount = $chunks->first() ? $chunks->first()->count() : 4;
         
         $fontSizes = [
-            10 => ['cell' => '8pt', 'header' => '7pt', 'name' => '7pt', 'school' => '12pt', 'title' => '10pt', 'padMarks' => '7px', 'padGrade' => '6px'],
-            8  => ['cell' => '8.5pt', 'header' => '7.5pt', 'name' => '8pt', 'school' => '13pt', 'title' => '11pt', 'padMarks' => '10px', 'padGrade' => '9px'],
+            10 => ['cell' => '8.5pt', 'header' => '7pt', 'name' => '7pt', 'school' => '12pt', 'title' => '10pt', 'padMarks' => '6.8px', 'padGrade' => '5.5px'],
+            8  => ['cell' => '8.7pt', 'header' => '7.5pt', 'name' => '8pt', 'school' => '13pt', 'title' => '11pt', 'padMarks' => '9px', 'padGrade' => '7px'],
         ];
         $fs = $fontSizes[$studentCount] ?? $fontSizes[10];
     @endphp
