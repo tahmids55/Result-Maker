@@ -132,5 +132,6 @@ Route::middleware(['auth', 'prevent-back-history'])->group(function () {
 
         // Activity History / Audit Log
         Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+        Route::delete('activity-log/clear', [ActivityLogController::class, 'clear'])->name('activity-log.clear');
     });
 });

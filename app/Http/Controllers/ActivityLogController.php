@@ -71,4 +71,20 @@ class ActivityLogController extends Controller
 
         return view('activity-log.index', compact('activities', 'modelTypes', 'users'));
     }
+
+    /**
+     * Clear all activity logs for the tenant.
+     */
+    public function clear()
+    {
+        $ownerId = auth()->user()->owner_id;
+        
+        $tenantUserIds = \App\Models\User::where('id', $ownerId)
+            ->orWhere('admin_id', $ownerId)
+            ->pluck('id');
+
+        Activity::whereIn('causer_id', $tenantUserIds)->delete();
+
+        return redirect()->route('activity-log.index')->with('success', 'Activity history has been cleared successfully.');
+    }
 }

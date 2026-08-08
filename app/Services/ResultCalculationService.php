@@ -20,6 +20,7 @@ class ResultCalculationService
         $subjects = Subject::with('subSubjects')->where('class_id', $student->class_id)
             ->where('section_id', $student->section_id)
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
 
         // Pre-load all marks for this student+exam in a single query (unless already provided)

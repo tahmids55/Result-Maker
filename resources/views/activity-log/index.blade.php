@@ -2,6 +2,58 @@
 @section('title', 'Activity History')
 
 @php
+if (!function_exists('formatSubjectDetailsDiff')) {
+    function formatSubjectDetailsDiff($oldArr, $newArr) {
+        if (!is_array($oldArr) || !is_array($newArr)) return [];
+        $oldMap = [];
+        foreach ($oldArr as $s) {
+            $oldMap[$s['subject_id'] ?? $s['subject_name'] ?? ''] = $s;
+        }
+        $changes = [];
+        foreach ($newArr as $newS) {
+            $key = $newS['subject_id'] ?? $newS['subject_name'] ?? '';
+            $subjectName = $newS['subject_name'] ?? 'Unknown Subject';
+            $oldS = $oldMap[$key] ?? null;
+            if (!$oldS) continue;
+            
+            if (isset($newS['components']) && isset($oldS['components'])) {
+                foreach ($newS['components'] as $compName => $compData) {
+                    $oldCompData = $oldS['components'][$compName] ?? null;
+                    $newMark = $compData['obtained'] ?? 0;
+                    $oldMark = $oldCompData['obtained'] ?? 0;
+                    if ($oldCompData && $oldMark != $newMark) {
+                        $cName = strtoupper($compName);
+                        $changes[] = "{$subjectName} ({$cName}): {$oldMark} ➔ {$newMark}";
+                    }
+                }
+            }
+            if (isset($newS['sub_subjects']) && isset($oldS['sub_subjects'])) {
+                $oldSubMap = [];
+                foreach ($oldS['sub_subjects'] as $ss) {
+                    $oldSubMap[$ss['sub_subject_id'] ?? $ss['name'] ?? ''] = $ss;
+                }
+                foreach ($newS['sub_subjects'] as $newSs) {
+                    $ssKey = $newSs['sub_subject_id'] ?? $newSs['name'] ?? '';
+                    $ssName = $newSs['name'] ?? 'Unknown Paper';
+                    $oldSs = $oldSubMap[$ssKey] ?? null;
+                    if ($oldSs && isset($newSs['components']) && isset($oldSs['components'])) {
+                        foreach ($newSs['components'] as $compName => $compData) {
+                            $oldCompData = $oldSs['components'][$compName] ?? null;
+                            $newMark = $compData['obtained'] ?? 0;
+                            $oldMark = $oldCompData['obtained'] ?? 0;
+                            if ($oldCompData && $oldMark != $newMark) {
+                                $cName = strtoupper($compName);
+                                $changes[] = "{$subjectName} {$ssName} ({$cName}): {$oldMark} ➔ {$newMark}";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return $changes;
+    }
+}
+
 if (!function_exists('resolveIdToName')) {
     function resolveIdToName($field, $val) {
         if (!is_numeric($val) || $val <= 0 || !\Illuminate\Support\Str::endsWith($field, '_id')) {
@@ -64,10 +116,19 @@ if (!function_exists('resolveIdToName')) {
             </h2>
             <p class="text-[13px] text-gray-500 mt-0.5">Audit log of system actions and data changes</p>
         </div>
-        <div>
+        <div class="flex items-center gap-3">
             <span class="text-xs font-medium px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full border border-gray-200">
                 {{ $activities->total() }} Entries
             </span>
+            @if($activities->total() > 0)
+                <form method="POST" action="{{ route('activity-log.clear') }}" onsubmit="return confirm('Are you sure you want to completely clear the activity history? This action cannot be undone.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="text-xs font-semibold px-3 py-1.5 bg-red-50 text-red-600 rounded-md border border-red-200 hover:bg-red-100 transition-colors flex items-center gap-1 shadow-sm">
+                        🗑️ Clear History
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 
@@ -250,18 +311,76 @@ if (!function_exists('resolveIdToName')) {
                                                                     $resolvedOld = resolveIdToName($field, $oldVal);
                                                                     $resolvedNew = resolveIdToName($field, $newVal);
                                                                     
-                                                                    $displayOld = $resolvedOld ?? (is_array($oldVal) ? json_encode($oldVal, JSON_PRETTY_PRINT) : (string) $oldVal);
-                                                                    $displayNew = $resolvedNew ?? (is_array($newVal) ? json_encode($newVal, JSON_PRETTY_PRINT) : (string) $newVal);
+                                                                    $isOldArr = is_array($oldVal);
+                                                                    $isNewArr = is_array($newVal);
+
+                                                                    $specialMarksDiff = null;
+                                                                    if ($field === 'subject_details' && $isOldArr && $isNewArr) {
+                                                                        $specialMarksDiff = formatSubjectDetailsDiff($oldVal, $newVal);
+                                                                    }
+
+                                                                    $displayOld = $resolvedOld ?? ($isOldArr ? json_encode($oldVal, JSON_PRETTY_PRINT) : (string) $oldVal);
+                                                                    $displayNew = $resolvedNew ?? ($isNewArr ? json_encode($newVal, JSON_PRETTY_PRINT) : (string) $newVal);
                                                                     
-                                                                    $displayOld = \Illuminate\Support\Str::limit($displayOld, 120);
-                                                                    $displayNew = \Illuminate\Support\Str::limit($displayNew, 120);
+                                                                    if (!$isOldArr && !$resolvedOld) $displayOld = \Illuminate\Support\Str::limit($displayOld, 120);
+                                                                    if (!$isNewArr && !$resolvedNew) $displayNew = \Illuminate\Support\Str::limit($displayNew, 120);
                                                                 @endphp
                                                                 <tr>
-                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
-                                                                    <td class="py-1 px-3 text-red-600 bg-red-50/30 break-all">{{ $displayOld ?: '—' }}</td>
-                                                                    <td class="py-1 px-3 text-green-600 bg-green-50/30 break-all">{{ $displayNew ?: '—' }}</td>
+                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700 align-top">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
+                                                                    @if($specialMarksDiff !== null)
+                                                                        <td colspan="2" class="py-1 px-3 text-gray-800 bg-gray-50 break-all align-top">
+                                                                            @if(empty($specialMarksDiff))
+                                                                                <span class="text-[10px] text-gray-500 italic">Subjects regenerated (no marks changed)</span>
+                                                                            @else
+                                                                                <ul class="list-disc list-inside text-[11px] font-semibold">
+                                                                                    @foreach($specialMarksDiff as $diffChange)
+                                                                                        <li>{{ $diffChange }}</li>
+                                                                                    @endforeach
+                                                                                </ul>
+                                                                            @endif
+                                                                        </td>
+                                                                    @else
+                                                                        <td class="py-1 px-3 text-red-600 bg-red-50/30 break-all align-top">
+                                                                            @if($isOldArr && !$resolvedOld)
+                                                                                <pre class="whitespace-pre-wrap text-[10px] bg-red-100/30 p-2 rounded max-h-48 overflow-y-auto mt-1 mb-1 border border-red-200/50">{{ $displayOld }}</pre>
+                                                                            @else
+                                                                                {{ $displayOld ?: '—' }}
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="py-1 px-3 text-green-600 bg-green-50/30 break-all align-top">
+                                                                            @if($isNewArr && !$resolvedNew)
+                                                                                <pre class="whitespace-pre-wrap text-[10px] bg-green-100/30 p-2 rounded max-h-48 overflow-y-auto mt-1 mb-1 border border-green-200/50">{{ $displayNew }}</pre>
+                                                                            @else
+                                                                                {{ $displayNew ?: '—' }}
+                                                                            @endif
+                                                                        </td>
+                                                                    @endif
                                                                 </tr>
                                                             @endforeach
+                                                            
+                                                            {{-- Show Unchanged Context Properties --}}
+                                                            @if($activity->subject)
+                                                                @php
+                                                                    $unchangedCount = 0;
+                                                                    $subjectAttrs = $activity->subject->getAttributes();
+                                                                @endphp
+                                                                @foreach($subjectAttrs as $field => $val)
+                                                                    @php
+                                                                        if (array_key_exists($field, $oldProps) || !in_array($field, ['student_id', 'subject_id', 'exam_id'])) continue;
+                                                                        $unchangedCount++;
+                                                                        $resolved = resolveIdToName($field, $val);
+                                                                        $isArr = is_array($val);
+                                                                        $display = $resolved ?? ($isArr ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
+                                                                        if (!$isArr && !$resolved) $display = \Illuminate\Support\Str::limit($display, 120);
+                                                                    @endphp
+                                                                    <tr class="opacity-75 bg-gray-50">
+                                                                        <td class="py-1 px-3 font-sans font-medium text-gray-500 align-top">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
+                                                                        <td colspan="2" class="py-1 px-3 text-gray-500 break-all align-top text-center italic">
+                                                                            {{ $display ?: '—' }} (Unchanged Context)
+                                                                        </td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            @endif
                                                         </tbody>
                                                     </table>
                                                 @elseif($activity->event === 'created' && !empty($newProps))
@@ -278,13 +397,20 @@ if (!function_exists('resolveIdToName')) {
                                                                     if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password', 'user_id'])) continue;
                                                                     
                                                                     $resolved = resolveIdToName($field, $val);
-                                                                    $display = $resolved ?? (is_array($val) ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
+                                                                    $isArr = is_array($val);
+                                                                    $display = $resolved ?? ($isArr ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
                                                                     
-                                                                    $display = \Illuminate\Support\Str::limit($display, 150);
+                                                                    if (!$isArr && !$resolved) $display = \Illuminate\Support\Str::limit($display, 150);
                                                                 @endphp
                                                                 <tr>
-                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
-                                                                    <td class="py-1 px-3 text-green-700 break-all">{{ $display ?: '—' }}</td>
+                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700 align-top">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
+                                                                    <td class="py-1 px-3 text-green-700 break-all align-top">
+                                                                        @if($isArr && !$resolved)
+                                                                            <pre class="whitespace-pre-wrap text-[10px] bg-green-50/50 p-2 rounded max-h-48 overflow-y-auto mt-1 mb-1 border border-green-100">{{ $display }}</pre>
+                                                                        @else
+                                                                            {{ $display ?: '—' }}
+                                                                        @endif
+                                                                    </td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
@@ -303,13 +429,20 @@ if (!function_exists('resolveIdToName')) {
                                                                     if (in_array($field, ['updated_at', 'created_at', 'remember_token', 'password', 'user_id'])) continue;
                                                                     
                                                                     $resolved = resolveIdToName($field, $val);
-                                                                    $display = $resolved ?? (is_array($val) ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
+                                                                    $isArr = is_array($val);
+                                                                    $display = $resolved ?? ($isArr ? json_encode($val, JSON_PRETTY_PRINT) : (string) $val);
                                                                     
-                                                                    $display = \Illuminate\Support\Str::limit($display, 150);
+                                                                    if (!$isArr && !$resolved) $display = \Illuminate\Support\Str::limit($display, 150);
                                                                 @endphp
                                                                 <tr>
-                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
-                                                                    <td class="py-1 px-3 text-red-700 break-all">{{ $display ?: '—' }}</td>
+                                                                    <td class="py-1 px-3 font-sans font-medium text-gray-700 align-top">{{ str_replace('_', ' ', ucfirst($field)) }}</td>
+                                                                    <td class="py-1 px-3 text-red-700 break-all align-top">
+                                                                        @if($isArr && !$resolved)
+                                                                            <pre class="whitespace-pre-wrap text-[10px] bg-red-50/50 p-2 rounded max-h-48 overflow-y-auto mt-1 mb-1 border border-red-100">{{ $display }}</pre>
+                                                                        @else
+                                                                            {{ $display ?: '—' }}
+                                                                        @endif
+                                                                    </td>
                                                                 </tr>
                                                             @endforeach
                                                         </tbody>
