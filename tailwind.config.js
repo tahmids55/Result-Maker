@@ -8,6 +8,7 @@ export default {
         './resources/**/*.blade.php',
         './resources/**/*.js',
         './resources/**/*.vue',
+        './app/**/*.php',
     ],
     darkMode: 'class',
     theme: {
