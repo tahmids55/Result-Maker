@@ -30,6 +30,14 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+Route::get('/pricing', function () {
+    return view('pricing');
+})->name('pricing');
+
+Route::get('/features', function () {
+    return view('features');
+})->name('features');
+
 // ── Authenticated Routes ────────────────────────────────────────────────────
 // ONLYOFFICE Webhooks & Plugin (Must be outside auth/CSRF for Docker container access)
 Route::get('onlyoffice/download/{id}/{token}', [\App\Http\Controllers\EditorController::class, 'download'])->name('onlyoffice.download');
